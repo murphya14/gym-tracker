@@ -1,8 +1,10 @@
 services:
   mysql:
     container_name: mysql
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: gym_tracker
     ports:
-      - 3306:3306
+      - "3306:3306"
