@@ -1,27 +1,29 @@
+import Layout from "~/components/layout";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
-type Exercise = {
+type CircuitExercise = {
+  id: string;
+  reps: number;
+  sets: number;
+  exercise?: {
+    id: string;
+    name: string;
+    description?: string;
+    videoUrl?: string;
+  };
+};
+
+type Circuit = {
   id: string;
   name: string;
-  videoUrl?: string;
-};
-
-type ExerciseItem = {
-  exerciseId: string;
-  reps: number;
-};
-
-type Round = {
-  name: string;
-  repeat: number;
-  exercises: ExerciseItem[];
+  exercises: CircuitExercise[];
 };
 
 type Workout = {
   id: string;
   name: string;
-  rounds: Round[];
+  circuits: Circuit[];
 };
 
 export default function WorkoutExecution() {
@@ -29,17 +31,8 @@ export default function WorkoutExecution() {
   const { id } = router.query;
 
   const [workout, setWorkout] = useState<Workout | null>(null);
-  const [allExercises, setAllExercises] = useState<Exercise[]>([]);
+  const [completed, setCompleted] = useState<Record<string, boolean>>({});
 
-  const [currentRound, setCurrentRound] = useState(0);
-  const [currentExercise, setCurrentExercise] = useState(0);
-  const [setCount, setSetCount] = useState(1);
-  const [weight, setWeight] = useState<number | "">("");
-
-  // ✅ NEW: last log state
-  const [lastLog, setLastLog] = useState<any>(null);
-
-  // LOAD WORKOUT
   useEffect(() => {
     if (!id) return;
 
@@ -48,158 +41,212 @@ export default function WorkoutExecution() {
       .then(setWorkout);
   }, [id]);
 
-  // LOAD EXERCISES
-  useEffect(() => {
-    fetch("/api/exercises")
-      .then((res) => res.json())
-      .then(setAllExercises);
-  }, []);
+  function toggleComplete(key: string) {
+    setCompleted((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  }
 
-  // LOADING STATE
   if (!workout) {
-    return <div>Loading workout...</div>;
-  }
-
-  // SAFE ROUND ACCESS
-  const rounds = workout.rounds ?? [];
-  const round = rounds[currentRound];
-
-  if (!round) {
-    return <div>No round found</div>;
-  }
-
-  // SAFE EXERCISE ACCESS
-  const exercises = round.exercises ?? [];
-  const currentExerciseItem = exercises[currentExercise];
-
-  if (!currentExerciseItem) {
-    return <div>No exercise found</div>;
-  }
-
-  // SAFE VALUES
-  const { reps, exerciseId } = currentExerciseItem;
-
-  // FIND EXERCISE
-  const exercise = allExercises.find((e) => e.id === exerciseId);
-
-  // ✅ NEW: fetch last log when exercise changes
-  useEffect(() => {
-    if (!exerciseId) return;
-
-    fetch(`/api/exercise-last?exerciseId=${exerciseId}`)
-      .then((res) => res.json())
-      .then(setLastLog);
-  }, [exerciseId]);
-
-  // COMPLETE SET
-  async function nextSet() {
-    try {
-      // SAVE LOG
-      await fetch("/api/log-set", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          exerciseId,
-          weight,
-        }),
-      });
-
-      const maxSets = reps;
-
-      // NEXT SET
-      if (setCount < maxSets) {
-        setSetCount((prev) => prev + 1);
-        setWeight("");
-        return;
-      }
-
-      // RESET SET COUNT
-      setSetCount(1);
-      setWeight("");
-
-      // NEXT EXERCISE
-      if (currentExercise < exercises.length - 1) {
-        setCurrentExercise((prev) => prev + 1);
-        return;
-      }
-
-      // NEXT ROUND
-      if (currentRound < rounds.length - 1) {
-        setCurrentRound((prev) => prev + 1);
-        setCurrentExercise(0);
-        return;
-      }
-
-      alert("Workout Complete!");
-    } catch (error) {
-      console.error(error);
-      alert("Failed to save set");
-    }
+    return (
+      <Layout>
+        <div style={{ padding: 20 }}>
+          Loading workout...
+        </div>
+      </Layout>
+    );
   }
 
   return (
-    <div style={{ padding: 30 }}>
-      <h1>{workout.name}</h1>
+    <Layout>
+      <div
+        style={{
+          padding: 16,
+          maxWidth: 900,
+          margin: "0 auto",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: 28,
+            marginBottom: 20,
+          }}
+        >
+          {workout.name}
+        </h1>
 
-      <h2>
-        Round {currentRound + 1} / {rounds.length}
-      </h2>
+        {workout.circuits.length === 0 && (
+          <p>No circuits found</p>
+        )}
 
-      <h3>{round.name}</h3>
+        {workout.circuits.map(
+          (circuit, circuitIndex) => {
+            const repeatCount = 3;
 
-      <hr />
+            return (
+              <div key={circuit.id}>
+                {Array.from({
+                  length: repeatCount,
+                }).map((_, roundIndex) => (
+                  <div
+                    key={`${circuit.id}-${roundIndex}`}
+                    style={{
+                      border: "1px solid #ddd",
+                      borderRadius: 12,
+                      padding: 16,
+                      marginTop: 18,
+                      background: "#fff",
+                    }}
+                  >
+                    <h2
+                      style={{
+                        fontSize: 20,
+                        marginBottom: 14,
+                      }}
+                    >
+                      Circuit{" "}
+                      {circuitIndex + 1}:{" "}
+                      {circuit.name} — Round{" "}
+                      {roundIndex + 1} / 3
+                    </h2>
 
-      <h2>{exercise?.name || "Loading exercise..."}</h2>
+                    {circuit.exercises.map(
+                      (item) => {
+                        const key = `${circuit.id}-${roundIndex}-${item.id}`;
 
-      {/* ✅ NEW: LAST PERFORMANCE */}
-      {lastLog?.weight && (
-        <div style={{ marginBottom: 10 }}>
-          <strong>Last:</strong> {lastLog.weight}kg
-        </div>
-      )}
+                        const isDone =
+                          completed[key];
 
-      <p>
-        Set {setCount} / {reps}
-      </p>
+                        return (
+                          <div
+                            key={key}
+                            style={{
+                              display:
+                                "grid",
+                              gridTemplateColumns:
+                                "40px 1fr",
+                              gap: 12,
+                              padding:
+                                "14px 0",
+                              borderTop:
+                                "1px solid #eee",
+                              opacity:
+                                isDone
+                                  ? 0.5
+                                  : 1,
+                              alignItems:
+                                "start",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={
+                                !!isDone
+                              }
+                              onChange={() =>
+                                toggleComplete(
+                                  key
+                                )
+                              }
+                              style={{
+                                width: 22,
+                                height: 22,
+                                marginTop: 4,
+                              }}
+                            />
 
-      {/* VIDEO */}
-      {exercise?.videoUrl && (
-        <div style={{ marginBottom: 20 }}>
-          <button onClick={() => window.open(exercise.videoUrl, "_blank")}>
-            ▶ Watch Video
-          </button>
-        </div>
-      )}
+                            <div>
+                              <strong
+                                style={{
+                                  display:
+                                    "block",
+                                  fontSize: 18,
+                                  textDecoration:
+                                    isDone
+                                      ? "line-through"
+                                      : "none",
+                                }}
+                              >
+                                {item
+                                  .exercise
+                                  ?.name ||
+                                  "Exercise"}
+                              </strong>
 
-      {/* WEIGHT INPUT */}
-      <div style={{ marginBottom: 20 }}>
-        <input
-          type="number"
-          placeholder="Enter weight"
-          value={weight}
-          onChange={(e) => setWeight(Number(e.target.value))}
-        />
+                              <div
+                                style={{
+                                  marginTop: 6,
+                                  fontSize: 16,
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {item.reps}{" "}
+                                reps
+                              </div>
+
+                              <div
+                                style={{
+                                  marginTop: 6,
+                                  color:
+                                    "#666",
+                                  lineHeight:
+                                    1.4,
+                                }}
+                              >
+                                {item
+                                  .exercise
+                                  ?.description ||
+                                  "-"}
+                              </div>
+
+                              {item
+                                .exercise
+                                ?.videoUrl ? (
+                                <button
+                                  style={{
+                                    marginTop: 10,
+                                    padding:
+                                      "8px 12px",
+                                    borderRadius: 8,
+                                    border:
+                                      "1px solid #ccc",
+                                    cursor:
+                                      "pointer",
+                                  }}
+                                  onClick={() => {
+                                    window.location.href =
+                                      item
+                                        .exercise
+                                        ?.videoUrl ||
+                                      "";
+                                  }}
+                                >
+                                  ▶ Video
+                                </button>
+                              ) : (
+                                <div
+                                  style={{
+                                    marginTop: 8,
+                                    color:
+                                      "#999",
+                                  }}
+                                >
+                                  No video
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          }
+        )}
       </div>
-
-      {/* COMPLETE SET */}
-      <button onClick={nextSet}>Complete Set</button>
-
-      <hr />
-
-      {/* PROGRESS */}
-      <div style={{ marginTop: 20 }}>
-        <h3>Progress</h3>
-
-        <p>
-          Round: {currentRound + 1} / {rounds.length}
-        </p>
-
-        <p>
-          Exercise: {currentExercise + 1} / {exercises.length}
-        </p>
-      </div>
-    </div>
+    </Layout>
   );
 }

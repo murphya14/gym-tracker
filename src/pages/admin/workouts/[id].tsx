@@ -1,3 +1,4 @@
+import Layout from "~/components/layout";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -26,6 +27,11 @@ type Exercise = {
   videoUrl?: string;
 };
 
+type Program = {
+  id: string;
+  name: string;
+};
+
 export default function WorkoutEditor() {
   const router = useRouter();
   const { id } = router.query;
@@ -35,10 +41,9 @@ export default function WorkoutEditor() {
 
   const [exerciseOptions, setExerciseOptions] = useState<Exercise[]>([]);
   const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [selectedProgramId, setSelectedProgramId] = useState("");
 
-  // =========================
-  // LOAD WORKOUT
-  // =========================
   useEffect(() => {
     if (!id) return;
 
@@ -51,28 +56,25 @@ export default function WorkoutEditor() {
         });
 
         setName(data.name ?? "");
+        setSelectedProgramId(data.programId ?? "");
       });
   }, [id]);
 
-  // =========================
-  // LOAD EXERCISES
-  // =========================
   useEffect(() => {
     fetch("/api/exercises")
       .then((res) => res.json())
       .then(setExerciseOptions);
   }, []);
+  useEffect(() => {
+  fetch("/api/programs")
+    .then((res) => res.json())
+    .then(setPrograms);
+}, []);
 
-  // =========================
-  // SAFE CIRCUITS HELPER
-  // =========================
   function getCircuits() {
     return workout?.circuits ? [...workout.circuits] : [];
   }
 
-  // =========================
-  // CIRCUITS
-  // =========================
   function addCircuit() {
     if (!workout) return;
 
@@ -115,9 +117,6 @@ export default function WorkoutEditor() {
     setWorkout({ ...workout, circuits });
   }
 
-  // =========================
-  // EXERCISES
-  // =========================
   function addExercise(cIndex: number) {
     if (!workout) return;
 
@@ -194,9 +193,6 @@ export default function WorkoutEditor() {
     setWorkout({ ...workout, circuits });
   }
 
-  // =========================
-  // SAVE
-  // =========================
   async function saveWorkout() {
     if (!workout) return;
 
@@ -205,6 +201,7 @@ export default function WorkoutEditor() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
+        programId: selectedProgramId,
         circuits: workout.circuits,
       }),
     });
@@ -212,161 +209,272 @@ export default function WorkoutEditor() {
     alert("Workout saved");
   }
 
-  if (!workout) return <div style={{ padding: 30 }}>Loading...</div>;
+  if (!workout) {
+    return (
+      <Layout>
+        <div style={{ padding: 20 }}>Loading...</div>
+      </Layout>
+    );
+  }
 
-  // =========================
-  // UI
-  // =========================
   return (
-    <div style={{ padding: 30 }}>
-      <h1>Workout Editor</h1>
+    <Layout>
+      <div
+        style={{
+          padding: 16,
+          maxWidth: 1000,
+          margin: "0 auto",
+        }}
+      >
+        <h1 style={{ fontSize: 28, marginBottom: 20 }}>
+          Workout Editor
+        </h1>
 
-      {/* HEADER */}
-      <div style={{ marginBottom: 20 }}>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Workout name"
-          style={{ fontSize: 18, padding: 8 }}
-        />
+        <div style={{ marginBottom: 20 }}>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Workout name"
+            style={{
+              fontSize: 18,
+              padding: 10,
+              width: "100%",
+              marginBottom: 10,
+              borderRadius: 8,
+              border: "1px solid #ccc",
+            }}
+          />
+          <select
+  value={selectedProgramId}
+  onChange={(e) =>
+    setSelectedProgramId(e.target.value)
+  }
+  style={{
+    width: "100%",
+    padding: 10,
+    borderRadius: 8,
+    border: "1px solid #ccc",
+    marginBottom: 12,
+  }}
+>
+  <option value="">
+    Select Program
+  </option>
 
-        <button onClick={saveWorkout} style={{ marginLeft: 10 }}>
-          Save
-        </button>
+  {programs.map((program) => (
+    <option
+      key={program.id}
+      value={program.id}
+    >
+      {program.name}
+    </option>
+  ))}
+</select>
 
-        <button onClick={addCircuit} style={{ marginLeft: 10 }}>
-          + Circuit
-        </button>
-      </div>
+          <button
+            onClick={saveWorkout}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "1px solid #ccc",
+              marginRight: 8,
+            }}
+          >
+            Save
+          </button>
 
-      <div style={{ display: "flex", gap: 30 }}>
-        {/* LEFT */}
-        <div style={{ flex: 2 }}>
-          {workout.circuits.map((circuit, cIndex) => (
-            <div
-              key={cIndex}
-              style={{
-                border: "1px solid #ddd",
-                padding: 15,
-                marginBottom: 20,
-                borderRadius: 10,
-              }}
-            >
-              {/* CIRCUIT NAME */}
-              <input
-                value={circuit.name}
-                onChange={(e) =>
-                  updateCircuitName(cIndex, e.target.value)
-                }
-                style={{ width: "100%", marginBottom: 10 }}
-              />
+          <button
+            onClick={addCircuit}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "1px solid #ccc",
+            }}
+          >
+            + Circuit
+          </button>
+        </div>
 
-              {/* EXERCISES */}
-              {circuit.exercises.map((ex, eIndex) => (
-                <div
-                  key={eIndex}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr",
+            gap: 20,
+          }}
+        >
+          <div>
+            {workout.circuits.map((circuit, cIndex) => (
+              <div
+                key={cIndex}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: 16,
+                  marginBottom: 20,
+                  borderRadius: 12,
+                  background: "#fff",
+                }}
+              >
+                <input
+                  value={circuit.name}
+                  onChange={(e) =>
+                    updateCircuitName(cIndex, e.target.value)
+                  }
                   style={{
-                    display: "flex",
-                    gap: 10,
-                    marginBottom: 10,
-                    alignItems: "center",
+                    width: "100%",
+                    marginBottom: 12,
+                    padding: 10,
+                    borderRadius: 8,
+                    border: "1px solid #ccc",
                   }}
-                >
-                  {/* DROPDOWN */}
-                  <select
-                    value={ex.exerciseId}
-                    onChange={(e) => {
-                      updateExercise(
-                        cIndex,
-                        eIndex,
-                        "exerciseId",
-                        e.target.value
-                      );
+                />
 
-                      const found = exerciseOptions.find(
-                        (x) => x.id === e.target.value
-                      );
-
-                      setPreviewExercise(found || null);
+                {circuit.exercises.map((ex, eIndex) => (
+                  <div
+                    key={eIndex}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr",
+                      gap: 8,
+                      marginBottom: 12,
+                      padding: 12,
+                      border: "1px solid #eee",
+                      borderRadius: 10,
                     }}
                   >
-                    <option value="">Select exercise</option>
+                    <select
+                      value={ex.exerciseId}
+                      onChange={(e) => {
+                        updateExercise(
+                          cIndex,
+                          eIndex,
+                          "exerciseId",
+                          e.target.value
+                        );
 
-                    {exerciseOptions.map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {opt.name}
-                      </option>
-                    ))}
-                  </select>
+                        const found = exerciseOptions.find(
+                          (x) => x.id === e.target.value
+                        );
 
-                  <input
-                    type="number"
-                    value={ex.reps}
-                    onChange={(e) =>
-                      updateExercise(
-                        cIndex,
-                        eIndex,
-                        "reps",
-                        Number(e.target.value)
-                      )
-                    }
-                    style={{ width: 60 }}
-                  />
+                        setPreviewExercise(found || null);
+                      }}
+                      style={{
+                        padding: 10,
+                        borderRadius: 8,
+                        border: "1px solid #ccc",
+                      }}
+                    >
+                      <option value="">Select exercise</option>
 
-                  <input
-                    type="number"
-                    value={ex.sets}
-                    onChange={(e) =>
-                      updateExercise(
-                        cIndex,
-                        eIndex,
-                        "sets",
-                        Number(e.target.value)
-                      )
-                    }
-                    style={{ width: 60 }}
-                  />
+                      {exerciseOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.name}
+                        </option>
+                      ))}
+                    </select>
 
-                  <button
-                    onClick={() =>
-                      deleteExercise(cIndex, eIndex)
-                    }
-                  >
-                    X
-                  </button>
-                </div>
-              ))}
+                    <input
+                      type="number"
+                      value={ex.reps}
+                      onChange={(e) =>
+                        updateExercise(
+                          cIndex,
+                          eIndex,
+                          "reps",
+                          Number(e.target.value)
+                        )
+                      }
+                      placeholder="Reps"
+                      style={{
+                        padding: 10,
+                        borderRadius: 8,
+                        border: "1px solid #ccc",
+                      }}
+                    />
 
-              <button onClick={() => addExercise(cIndex)}>
-                + Add Exercise
-              </button>
-            </div>
-          ))}
-        </div>
+                    <input
+                      type="number"
+                      value={ex.sets}
+                      onChange={(e) =>
+                        updateExercise(
+                          cIndex,
+                          eIndex,
+                          "sets",
+                          Number(e.target.value)
+                        )
+                      }
+                      placeholder="Sets"
+                      style={{
+                        padding: 10,
+                        borderRadius: 8,
+                        border: "1px solid #ccc",
+                      }}
+                    />
 
-        {/* RIGHT: PREVIEW */}
-        <div style={{ flex: 1 }}>
-          <h3>Preview</h3>
+                    <button
+                      onClick={() => deleteExercise(cIndex, eIndex)}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: 8,
+                        border: "1px solid #ccc",
+                      }}
+                    >
+                      Delete Exercise
+                    </button>
+                  </div>
+                ))}
 
-          {previewExercise?.videoUrl ? (
-            <div>
-              <p>{previewExercise.name}</p>
+                <button
+                  onClick={() => addExercise(cIndex)}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    border: "1px solid #ccc",
+                    marginRight: 8,
+                  }}
+                >
+                  + Add Exercise
+                </button>
 
-              <iframe
-                width="100%"
-                height="250"
-                src={previewExercise.videoUrl.replace(
-                  "watch?v=",
-                  "embed/"
-                )}
-                allowFullScreen
-              />
-            </div>
-          ) : (
-            <p>Select an exercise</p>
-          )}
+                <button
+                  onClick={() => deleteCircuit(cIndex)}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    border: "1px solid #ccc",
+                  }}
+                >
+                  Delete Circuit
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <h3>Preview</h3>
+
+            {previewExercise?.videoUrl ? (
+              <div>
+                <p>{previewExercise.name}</p>
+
+                <button
+                  onClick={() => {
+                    window.location.href = previewExercise.videoUrl || "";
+                  }}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    border: "1px solid #ccc",
+                  }}
+                >
+                  ▶ Open Video
+                </button>
+              </div>
+            ) : (
+              <p>Select an exercise</p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

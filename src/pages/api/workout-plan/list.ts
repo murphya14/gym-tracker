@@ -9,16 +9,29 @@ export default async function handler(
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  try {
-    const workouts = await prisma.workoutPlan.findMany({
-      orderBy: {
-        createdAt: "desc",
+  const workouts = await prisma.workoutPlan.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      program: true,
+      circuits: {
+        orderBy: {
+          order: "asc",
+        },
+        include: {
+          exercises: {
+            orderBy: {
+              order: "asc",
+            },
+            include: {
+              exercise: true,
+            },
+          },
+        },
       },
-    });
+    },
+  });
 
-    return res.status(200).json(workouts);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Server error" });
-  }
+  return res.status(200).json(workouts);
 }
