@@ -33,7 +33,7 @@ export const accountDeletionRouter = createTRPCRouter({
 				throw new Error('Password incorrect');
 			}
 
-			const deletedWorkouts = await prisma.workout.deleteMany({
+			const deletedWorkouts = await prisma.workoutPlan.deleteMany({
 				where: {
 					userId: input.userId,
 				},
