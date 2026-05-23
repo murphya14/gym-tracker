@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { type WorkoutPlan } from "@prisma/client";
+
+type WorkoutLike = {
+  id: string;
+};
 
 export type WorkoutCompletionMap = Record<string, boolean>;
 
 export const useWorkoutProgress = (
-  workouts: WorkoutPlan[] | undefined
+  workouts: WorkoutLike[] | undefined
 ) => {
   const [workoutProgressMap, setWorkoutProgressMap] =
     useState<WorkoutCompletionMap>({});
@@ -36,11 +39,9 @@ export const useWorkoutProgress = (
 
       if (isValidMap(parsedMap)) {
         setWorkoutProgressMap(parsedMap);
-
         setIsEveryWorkoutComplete(
           Object.values(parsedMap).every(Boolean)
         );
-
         return;
       }
     }
@@ -71,10 +72,9 @@ export const useWorkoutProgress = (
           JSON.stringify(updatedWorkouts)
         );
 
-        const allComplete =
-          Object.values(updatedWorkouts).every(Boolean);
-
-        setIsEveryWorkoutComplete(allComplete);
+        setIsEveryWorkoutComplete(
+          Object.values(updatedWorkouts).every(Boolean)
+        );
 
         return updatedWorkouts;
       });
