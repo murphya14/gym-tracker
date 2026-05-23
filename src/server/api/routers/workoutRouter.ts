@@ -7,7 +7,7 @@ export type WorkoutWithExercise = {
   name: string;
   sessionId: string | null;
   userId: string | null;
-};
+}[];
 
 export const workoutRouter = createTRPCRouter({
   createWorkout: protectedProcedure
