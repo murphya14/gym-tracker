@@ -1,283 +1,301 @@
-import { z } from 'zod';
-import { createTRPCRouter, protectedProcedure } from '../trpc';
-import { prisma } from '~/server/db';
+import { z } from "zod";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { prisma } from "~/server/db";
 
 export const sessionRouter = createTRPCRouter({
-	createSession: protectedProcedure
-		.input(
-			z.object({
-				name: z.string(),
-				userId: z.string(),
-				description: z.string(),
-				days: z.string().array(),
-			}),
-		)
-		.mutation(async ({ input }) => {
-			const createdSession = await prisma.session.create({
-				data: {
-					name: input.name,
-					description: input.description,
-					userId: input.userId,
-				},
-			});
+  createSession: protectedProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        userId: z.string(),
+        description: z.string(),
+        days: z.string().array(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const createdSession = await prisma.session.create({
+        data: {
+          name: input.name,
+          description: input.description,
+          userId: input.userId,
+        },
+      });
 
-			await Promise.all(
-				input.days.map(async (day) => {
-					await prisma.sessionDaysActive.create({
-						data: {
-							day: day,
-							sessionId: createdSession.id,
-						},
-					});
-				}),
-			);
+      await Promise.all(
+        input.days.map(async (day) => {
+          await prisma.sessionDaysActive.create({
+            data: {
+              day,
+              sessionId: createdSession.id,
+            },
+          });
+        })
+      );
 
-			return createdSession;
-		}),
+      return createdSession;
+    }),
 
-	getAllSessions: protectedProcedure
-		.input(
-			z.object({
-				userId: z.string(),
-			}),
-		)
-		.query(async ({ input }) => {
-			const sessions = await prisma.session.findMany({
-				where: {
-					userId: input.userId,
-				},
-			});
-			return sessions;
-		}),
+  getAllSessions: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      return prisma.session.findMany({
+        where: {
+          userId: input.userId,
+        },
+      });
+    }),
 
-	getSessionsAddedToCurrentActiveRoutine: protectedProcedure
-		.input(z.object({ userId: z.string() }))
-		.query(async ({ input }) => {
-			const activeRoutine = await prisma.routine.findFirst({
-				where: {
-					userId: input.userId,
-					isActive: true,
-				},
-			});
+  getSessionsAddedToCurrentActiveRoutine: protectedProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input }) => {
+      const activeRoutine = await prisma.routine.findFirst({
+        where: {
+          userId: input.userId,
+          isActive: true,
+        },
+      });
 
-			if (!activeRoutine) {
-				return null;
-			}
+      if (!activeRoutine) {
+        return null;
+      }
 
-			const sessionsRelatedToActiveRoutine =
-				await prisma.session.findMany({
-					where: {
-						routineId: activeRoutine.id,
-					},
-					include: {
-						days: true,
-					},
-				});
+      return prisma.session.findMany({
+        where: {
+          routineId: activeRoutine.id,
+        },
+        include: {
+          days: true,
+        },
+      });
+    }),
 
-			return sessionsRelatedToActiveRoutine;
-		}),
+  getSessionsThatAreNotAddedToActiveRoutine: protectedProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input }) => {
+      const activeRoutine = await prisma.routine.findFirst({
+        where: {
+          userId: input.userId,
+          isActive: true,
+        },
+      });
 
-	getSessionsThatAreNotAddedToActiveRoutine: protectedProcedure
-		.input(z.object({ userId: z.string() }))
-		.query(async ({ input }) => {
-			// Check if there is an active routine
-			const activeRoutine = await prisma.routine.findFirst({
-				where: {
-					userId: input.userId,
-					isActive: true,
-				},
-			});
+      if (!activeRoutine) {
+        return null;
+      }
 
-			if (!activeRoutine) {
-				return null;
-			}
+      return prisma.session.findMany({
+        where: {
+          AND: [
+            { userId: input.userId },
+            {
+              OR: [
+                { routineId: null },
+                {
+                  routineId: {
+                    not: {
+                      equals: activeRoutine.id,
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      });
+    }),
 
-			const sessionsNotAddedToActiveRoutine =
-				await prisma.session.findMany({
-					where: {
-						AND: [
-							{ userId: input.userId },
-							{
-								OR: [
-									{ routineId: null },
-									{
-										routineId: {
-											not: {
-												equals: activeRoutine.id,
-											},
-										},
-									},
-								],
-							},
-						],
-					},
-				});
+  deleteSession: protectedProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .mutation(async ({ input }) => {
+      await prisma.session.delete({
+        where: {
+          id: input.sessionId,
+        },
+      });
+    }),
 
-			return sessionsNotAddedToActiveRoutine;
-		}),
+  getSessionsThatAreActiveOnDate: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        date: z.date(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const userTimezone =
+        ctx.session.user.userSetting?.timezone.iana ?? "UTC";
 
-	deleteSession: protectedProcedure
-		.input(z.object({ sessionId: z.string() }))
-		.mutation(async ({ input }) => {
-			await prisma.session.delete({
-				where: {
-					id: input.sessionId,
-				},
-			});
-		}),
+      const userDate = new Date(
+        input.date.toLocaleString("en-US", {
+          timeZone: userTimezone,
+        })
+      );
 
-	getSessionsThatAreActiveOnDate: protectedProcedure
-		.input(
-			z.object({
-				userId: z.string(),
-				date: z.date(),
-			}),
-		)
-		.query(async ({ input, ctx }) => {
-			const userTimezone =
-				ctx.session.user.userSetting?.timezone.iana ?? 'UTC';
+      const dayMap = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
 
-			// Convert input date to user's timezone
-			const userDate = new Date(
-				input.date.toLocaleString('en-US', {
-					timeZone: userTimezone,
-				}),
-			);
+      return prisma.session.findMany({
+        select: {
+          id: true,
+          name: true,
+          description: true,
+        },
+        where: {
+          userId: input.userId,
+          days: {
+            some: {
+              day: dayMap[userDate.getDay()],
+            },
+          },
+          routine: {
+            isActive: true,
+          },
+        },
+      });
+    }),
 
-			const dayMap = [
-				'sunday',
-				'monday',
-				'tuesday',
-				'wednesday',
-				'thursday',
-				'friday',
-				'saturday',
-			];
+  getSessionById: protectedProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const session = await prisma.session.findUnique({
+        where: {
+          id: input.sessionId,
+        },
+        include: {
+          days: true,
+          workouts: {
+            include: {
+              circuits: {
+                include: {
+                  exercises: {
+                    include: {
+                      exercise: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
 
-			const sessions = await prisma.session.findMany({
-				select: {
-					id: true,
-					name: true,
-					description: true,
-				},
-				where: {
-					userId: input.userId,
-					days: {
-						some: {
-							day: dayMap[userDate.getDay()],
-						},
-					},
-					routine: {
-						isActive: true,
-					},
-				},
-			});
+      if (!session) {
+        throw new Error("Session not found");
+      }
 
-			return sessions;
-		}),
+      if (session.userId !== ctx.session.user.id) {
+        throw new Error("Unauthorized");
+      }
 
-	getSessionById: protectedProcedure
-		.input(
-			z.object({
-				sessionId: z.string(),
-			}),
-		)
-		.query(async ({ input, ctx }) => {
-			const session = await prisma.session.findUnique({
-				where: {
-					id: input.sessionId,
-				},
-				include: {
-					days: true,
-					workouts: {
-						include: {
-							exercise: true,
-						},
-					},
-				},
-			});
+      return session;
+    }),
 
-			if (!session) {
-				throw new Error('Session not found');
-			}
+  updateSession: protectedProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        name: z.string(),
+        description: z.string(),
+        days: z.string().array(),
+        workouts: z.array(
+          z.object({
+            exerciseId: z.string(),
+            weightLbs: z.number().optional(),
+            reps: z.number().optional(),
+            sets: z.number().optional(),
+            durationSeconds: z.number().optional(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      await prisma.sessionDaysActive.deleteMany({
+        where: { sessionId: input.sessionId },
+      });
 
-			// Verify user owns this session
-			if (session.userId !== ctx.session.user.id) {
-				throw new Error('Unauthorized');
-			}
+      await prisma.workoutPlan.deleteMany({
+        where: { sessionId: input.sessionId },
+      });
 
-			return session;
-		}),
+      const updatedSession = await prisma.session.update({
+        where: { id: input.sessionId },
+        data: {
+          name: input.name,
+          description: input.description,
+          days: {
+            create: input.days.map((day) => ({
+              day,
+            })),
+          },
+          workouts: {
+            create: input.workouts.map((workout, index) => ({
+              name: `Workout ${index + 1}`,
+              userId: ctx.session.user.id,
+              circuits: {
+                create: {
+                  name: "Circuit 1",
+                  order: 0,
+                  repeat: 1,
+                  exercises: {
+                    create: {
+                      exerciseId: workout.exerciseId,
+                      reps: workout.reps ?? 10,
+                      sets: workout.sets ?? 1,
+                      order: 0,
+                    },
+                  },
+                },
+              },
+            })),
+          },
+        },
+        include: {
+          days: true,
+          workouts: {
+            include: {
+              circuits: {
+                include: {
+                  exercises: {
+                    include: {
+                      exercise: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
 
-	updateSession: protectedProcedure
-		.input(
-			z.object({
-				sessionId: z.string(),
-				name: z.string(),
-				description: z.string(),
-				days: z.string().array(),
-				workouts: z.array(
-					z.object({
-						exerciseId: z.string(),
-						weightLbs: z.number().optional(),
-						reps: z.number().optional(),
-						sets: z.number().optional(),
-						durationSeconds: z.number().optional(),
-					}),
-				),
-			}),
-		)
-		.mutation(async ({ input, ctx }) => {
-			// Delete existing days and workouts
-			await prisma.sessionDaysActive.deleteMany({
-				where: { sessionId: input.sessionId },
-			});
-			await prisma.workout.deleteMany({
-				where: { sessionId: input.sessionId },
-			});
+      return updatedSession;
+    }),
 
-			// Update session
-			const updatedSession = await prisma.session.update({
-				where: { id: input.sessionId },
-				data: {
-					name: input.name,
-					description: input.description,
-					days: {
-						create: input.days.map((day) => ({
-							day: day,
-						})),
-					},
-					workouts: {
-						create: input.workouts.map((workout) => ({
-							exerciseId: workout.exerciseId,
-							weightLbs: workout.weightLbs,
-							reps: workout.reps,
-							sets: workout.sets,
-							durationSeconds: workout.durationSeconds,
-							userId: ctx.session.user.id,
-						})),
-					},
-				},
-				include: {
-					days: true,
-					workouts: true,
-				},
-			});
-
-			return updatedSession;
-		}),
-
-	getSessionsThatAreNotAddedToRoutine: protectedProcedure.query(
-		async ({ ctx }) => {
-			return ctx.prisma.session.findMany({
-				where: {
-					userId: ctx.session.user.id,
-					routineId: null,
-				},
-				include: {
-					days: true,
-				},
-			});
-		},
-	),
+  getSessionsThatAreNotAddedToRoutine: protectedProcedure.query(
+    async ({ ctx }) => {
+      return ctx.prisma.session.findMany({
+        where: {
+          userId: ctx.session.user.id,
+          routineId: null,
+        },
+        include: {
+          days: true,
+        },
+      });
+    }
+  ),
 });
