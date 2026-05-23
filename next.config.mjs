@@ -1,32 +1,29 @@
-import withSerwistInit from '@serwist/next';
-
+import withSerwistInit from "@serwist/next";
 
 /**
- * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
- * for Docker builds.
+ * Run `build` or `dev` with `SKIP_ENV_VALIDATION`
+ * to skip env validation.
  */
 await import("./src/env.mjs");
 
 const withSerwist = withSerwistInit({
   swSrc: "src/service-worker/index.ts",
-  swDest: 'public/sw.js',
+  swDest: "public/sw.js",
   disable: process.env.NODE_ENV === "development",
-  cacheOnNavigation: true
-})  
+  cacheOnNavigation: true,
+});
 
-/** @type {import('next').NextConfig} */
+/** @type {import("next").NextConfig} */
 const nextConfig = {
+  reactStrictMode: false,
+
   eslint: {
     ignoreDuringBuilds: true,
   },
+
   typescript: {
     ignoreBuildErrors: true,
   },
 };
 
-module.exports = nextConfig;
-/** @type {import("next").NextConfig} */
-const config = withSerwist({
-  reactStrictMode: false,
-})
-export default config;
+export default withSerwist(nextConfig);
