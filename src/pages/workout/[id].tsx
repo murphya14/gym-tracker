@@ -30,8 +30,13 @@ export default function WorkoutExecution() {
   const router = useRouter();
   const { id } = router.query;
 
-  const [workout, setWorkout] = useState<Workout | null>(null);
-  const [completed, setCompleted] = useState<Record<string, boolean>>({});
+  const [workout, setWorkout] =
+    useState<Workout | null>(null);
+
+  const [completed, setCompleted] =
+    useState<Record<string, boolean>>(
+      {}
+    );
 
   useEffect(() => {
     if (!id) return;
@@ -46,6 +51,95 @@ export default function WorkoutExecution() {
       ...prev,
       [key]: !prev[key],
     }));
+  }
+
+  function openVideoModal(
+    videoUrl: string
+  ) {
+    const modal =
+      document.createElement("div");
+
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100%";
+    modal.style.height = "100%";
+    modal.style.background =
+      "rgba(0,0,0,0.85)";
+    modal.style.display = "flex";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent =
+      "center";
+    modal.style.zIndex = "9999";
+    modal.style.padding = "20px";
+
+    modal.innerHTML = `
+      <div style="
+        position: relative;
+        width: 100%;
+        max-width: 850px;
+        background: #000;
+        border-radius: 16px;
+        overflow: hidden;
+      ">
+        <button
+          id="close-video-modal"
+          style="
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 10;
+            background: white;
+            color: black;
+            border: none;
+            border-radius: 999px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+          "
+        >
+          ✕
+        </button>
+
+        <iframe
+          width="100%"
+          height="500"
+          src="${videoUrl}"
+          title="Exercise Video"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document
+      .getElementById(
+        "close-video-modal"
+      )
+      ?.addEventListener(
+        "click",
+        () => {
+          document.body.removeChild(
+            modal
+          );
+        }
+      );
+
+    modal.addEventListener(
+      "click",
+      (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(
+            modal
+          );
+        }
+      }
+    );
   }
 
   if (!workout) {
@@ -76,9 +170,8 @@ export default function WorkoutExecution() {
           {workout.name}
         </h1>
 
-        {workout.circuits.length === 0 && (
-          <p>No circuits found</p>
-        )}
+        {workout.circuits.length ===
+          0 && <p>No circuits found</p>}
 
         {workout.circuits.map(
           (circuit, circuitIndex) => {
@@ -92,7 +185,8 @@ export default function WorkoutExecution() {
                   <div
                     key={`${circuit.id}-${roundIndex}`}
                     style={{
-                      border: "1px solid #ddd",
+                      border:
+                        "1px solid #ddd",
                       borderRadius: 12,
                       padding: 16,
                       marginTop: 18,
@@ -107,7 +201,8 @@ export default function WorkoutExecution() {
                     >
                       Circuit{" "}
                       {circuitIndex + 1}:{" "}
-                      {circuit.name} — Round{" "}
+                      {circuit.name} —
+                      Round{" "}
                       {roundIndex + 1} / 3
                     </h2>
 
@@ -213,16 +308,21 @@ export default function WorkoutExecution() {
                                       "1px solid #ccc",
                                     cursor:
                                       "pointer",
+                                    background:
+                                      "#111",
+                                    color:
+                                      "white",
                                   }}
-                                  onClick={() => {
-                                    window.location.href =
+                                  onClick={() =>
+                                    openVideoModal(
                                       item
                                         .exercise
                                         ?.videoUrl ||
-                                      "";
-                                  }}
+                                        ""
+                                    )
+                                  }
                                 >
-                                  ▶ Video
+                                  ▶ Watch Demo
                                 </button>
                               ) : (
                                 <div
