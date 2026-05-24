@@ -268,7 +268,9 @@ export default function WorkoutEditor() {
     Select Program
   </option>
 
-  {programs.map((program) => (
+  {[...programs]
+  .sort((a, b) => a.name.localeCompare(b.name))
+  .map((program) =>  (
     <option
       key={program.id}
       value={program.id}
