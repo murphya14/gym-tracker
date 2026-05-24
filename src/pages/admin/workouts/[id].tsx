@@ -202,7 +202,14 @@ export default function WorkoutEditor() {
       body: JSON.stringify({
         name,
         programId: selectedProgramId,
-        circuits: workout.circuits,
+        circuits: workout.circuits.map((circuit, cIndex) => ({
+  ...circuit,
+  order: cIndex,
+  exercises: circuit.exercises.map((exercise, eIndex) => ({
+    ...exercise,
+    order: eIndex,
+  })),
+})),
       }),
     });
 
