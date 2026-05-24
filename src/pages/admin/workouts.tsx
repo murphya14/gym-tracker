@@ -211,7 +211,28 @@ export default function AdminWorkouts() {
               </div>
 
               {isProgramOpen &&
-                programWorkouts.map((w) => {
+                [...programWorkouts]
+  .sort((a, b) => {
+    const getNumbers = (name: string) => {
+      const weekMatch = name.match(/week\s*(\d+)/i);
+      const workoutMatch = name.match(/workout\s*(\d+)/i);
+
+      return {
+        week: weekMatch ? Number(weekMatch[1]) : 999,
+        workout: workoutMatch ? Number(workoutMatch[1]) : 999,
+      };
+    };
+
+    const aNums = getNumbers(a.name);
+    const bNums = getNumbers(b.name);
+
+    if (aNums.week !== bNums.week) {
+      return aNums.week - bNums.week;
+    }
+
+    return aNums.workout - bNums.workout;
+  })
+  .map((w) => {
                   const isOpen = openWorkoutId === w.id;
 
                   return (
