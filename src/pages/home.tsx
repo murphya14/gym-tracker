@@ -1,6 +1,7 @@
 import { type NextPage } from "next";
 import { useRouter } from "next/router";
 
+import ProfileSelector from "~/components/profileSelector";
 import Layout from "~/components/layout";
 
 const Home: NextPage = () => {
@@ -27,6 +28,10 @@ const Home: NextPage = () => {
         <h1 className="text-3xl font-bold">
           Workout Dashboard
         </h1>
+
+        <div className="w-full max-w-3xl">
+          <ProfileSelector />
+        </div>
 
         <div className="grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-3">
           {/* BEGIN WORKOUT */}

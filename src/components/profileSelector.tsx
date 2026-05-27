@@ -6,19 +6,35 @@ export default function ProfileSelector() {
   const [activeProfile, setActiveProfile] = useState("");
 
   useEffect(() => {
-    setActiveProfile(localStorage.getItem("activeProfile") || "");
+    setActiveProfile(
+      localStorage.getItem("activeProfile") || "Aisling"
+    );
   }, []);
 
   function chooseProfile(profile: string) {
     localStorage.setItem("activeProfile", profile);
     setActiveProfile(profile);
+
+    window.location.reload();
   }
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <p>Who is training?</p>
+      <p
+        style={{
+          marginBottom: 8,
+          fontWeight: 600,
+        }}
+      >
+        Active Profile
+      </p>
 
-      <div style={{ display: "flex", gap: 10 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+        }}
+      >
         {profiles.map((profile) => (
           <button
             key={profile}
@@ -28,8 +44,12 @@ export default function ProfileSelector() {
               borderRadius: 10,
               border:
                 activeProfile === profile
-                  ? "2px solid #111827"
+                  ? "2px solid #22c55e"
                   : "1px solid #ccc",
+              background:
+                activeProfile === profile
+                  ? "#dcfce7"
+                  : "#fff",
             }}
           >
             {profile}
