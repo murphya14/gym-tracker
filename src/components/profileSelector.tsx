@@ -26,7 +26,8 @@ export default function ProfileSelector() {
           fontWeight: 600,
         }}
       >
-        Active Profile
+        Active Profile: {activeProfile}
+
       </p>
 
       <div
