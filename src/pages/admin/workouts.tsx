@@ -343,44 +343,7 @@ export default function AdminWorkouts() {
 
                       {isOpen && (
                         <div style={{ marginTop: 18 }}>
-                          {w.circuits.length === 0 ? (
-                            <p>No circuits added yet</p>
-                          ) : (
-                            w.circuits.map((circuit) => (
-                              <div
-                                key={circuit.id}
-                                style={{
-                                  marginBottom: 20,
-                                  padding: 14,
-                                  border: "1px solid #eee",
-                                  borderRadius: 10,
-                                }}
-                              >
-                                <strong>
-                                  {circuit.name}{" "}
-                                  {circuit.repeat ? `(x${circuit.repeat})` : ""}
-                                </strong>
 
-                                <div style={{ marginTop: 10 }}>
-                                  {circuit.exercises.length === 0 ? (
-                                    <p>No exercises</p>
-                                  ) : (
-                                    circuit.exercises.map((ex) => (
-                                      <div
-                                        key={ex.id}
-                                        style={{
-                                          padding: "8px 0",
-                                        }}
-                                      >
-                                        {ex.exercise.name} — {ex.reps} reps ×{" "}
-                                        {ex.sets} sets
-                                      </div>
-                                    ))
-                                  )}
-                                </div>
-                              </div>
-                            ))
-                          )}
 
                           <div
                             style={{
