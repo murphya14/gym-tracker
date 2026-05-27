@@ -30,10 +30,13 @@ type Workout = {
   }[];
 };
 
+type CompletionMap = Record<string, boolean>;
+
 export default function AdminWorkouts() {
   const router = useRouter();
 
   const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [completionMap, setCompletionMap] = useState<CompletionMap>({});
   const [loading, setLoading] = useState(true);
   const [openWorkoutId, setOpenWorkoutId] = useState<string | null>(null);
   const [openProgram, setOpenProgram] = useState<string | null>(null);
@@ -49,7 +52,37 @@ export default function AdminWorkouts() {
         console.error(error);
         setLoading(false);
       });
+
+    const profile = localStorage.getItem("activeProfile") || "Aisling";
+    const saved = localStorage.getItem(`workoutCompletionMap_${profile}`);
+
+    if (saved) {
+      setCompletionMap(JSON.parse(saved));
+    }
   }, []);
+
+  function sortWorkouts(list: Workout[]) {
+    return [...list].sort((a, b) => {
+      const getNumbers = (name: string) => {
+        const weekMatch = name.match(/week\s*(\d+)/i);
+        const workoutMatch = name.match(/workout\s*(\d+)/i);
+
+        return {
+          week: weekMatch ? Number(weekMatch[1]) : 999,
+          workout: workoutMatch ? Number(workoutMatch[1]) : 999,
+        };
+      };
+
+      const aNums = getNumbers(a.name);
+      const bNums = getNumbers(b.name);
+
+      if (aNums.week !== bNums.week) {
+        return aNums.week - bNums.week;
+      }
+
+      return aNums.workout - bNums.workout;
+    });
+  }
 
   async function createWorkout() {
     const res = await fetch("/api/workout-plan/create-empty", {
@@ -129,9 +162,13 @@ export default function AdminWorkouts() {
     );
   }
 
-  const programNames = [
-    ...new Set(workouts.map((w) => getProgramName(w))),
-  ];
+  const programNames = [...new Set(workouts.map((w) => getProgramName(w)))];
+
+  const sortedAllWorkouts = sortWorkouts(workouts);
+
+  const nextWorkout = sortedAllWorkouts.find(
+    (workout) => completionMap[workout.id] !== true
+  );
 
   return (
     <Layout>
@@ -150,6 +187,26 @@ export default function AdminWorkouts() {
         >
           Workout Admin
         </h1>
+
+        {nextWorkout && (
+          <button
+            onClick={() => router.push(`/workout/${nextWorkout.id}`)}
+            style={{
+              width: "100%",
+              padding: 18,
+              marginBottom: 20,
+              borderRadius: 14,
+              border: "none",
+              background: "#22c55e",
+              color: "white",
+              fontSize: 18,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            🔥 Continue Next Workout: {nextWorkout.name}
+          </button>
+        )}
 
         <button
           onClick={createWorkout}
@@ -172,6 +229,8 @@ export default function AdminWorkouts() {
           const programWorkouts = workouts.filter(
             (w) => getProgramName(w) === programName
           );
+
+          const sortedProgramWorkouts = sortWorkouts(programWorkouts);
 
           const isProgramOpen = openProgram === programName;
 
@@ -205,42 +264,22 @@ export default function AdminWorkouts() {
                 >
                   {programWorkouts.length} workouts
                 </p>
-
-
-               
               </div>
 
               {isProgramOpen &&
-                [...programWorkouts]
-  .sort((a, b) => {
-    const getNumbers = (name: string) => {
-      const weekMatch = name.match(/week\s*(\d+)/i);
-      const workoutMatch = name.match(/workout\s*(\d+)/i);
-
-      return {
-        week: weekMatch ? Number(weekMatch[1]) : 999,
-        workout: workoutMatch ? Number(workoutMatch[1]) : 999,
-      };
-    };
-
-    const aNums = getNumbers(a.name);
-    const bNums = getNumbers(b.name);
-
-    if (aNums.week !== bNums.week) {
-      return aNums.week - bNums.week;
-    }
-
-    return aNums.workout - bNums.workout;
-  })
-  .map((w) => {
+                sortedProgramWorkouts.map((w) => {
                   const isOpen = openWorkoutId === w.id;
+                  const isCompleted = completionMap[w.id] === true;
+                  const isNextWorkout = nextWorkout?.id === w.id;
 
                   return (
                     <div
                       key={w.id}
                       style={{
                         padding: 16,
-                        border: "1px solid #ddd",
+                        border: isNextWorkout
+                          ? "2px solid #22c55e"
+                          : "1px solid #ddd",
                         marginBottom: 16,
                         borderRadius: 12,
                         background: "#fff",
@@ -261,6 +300,30 @@ export default function AdminWorkouts() {
                           }}
                         >
                           {w.name}
+
+                          {isCompleted && (
+                            <span
+                              style={{
+                                marginLeft: 8,
+                                color: "green",
+                                fontSize: 14,
+                              }}
+                            >
+                              ✅ Completed
+                            </span>
+                          )}
+
+                          {isNextWorkout && !isCompleted && (
+                            <span
+                              style={{
+                                marginLeft: 8,
+                                color: "#f97316",
+                                fontSize: 14,
+                              }}
+                            >
+                              🔥 Next
+                            </span>
+                          )}
                         </h3>
 
                         <button
@@ -293,9 +356,7 @@ export default function AdminWorkouts() {
                               >
                                 <strong>
                                   {circuit.name}{" "}
-                                  {circuit.repeat
-                                    ? `(x${circuit.repeat})`
-                                    : ""}
+                                  {circuit.repeat ? `(x${circuit.repeat})` : ""}
                                 </strong>
 
                                 <div style={{ marginTop: 10 }}>
