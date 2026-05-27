@@ -6,6 +6,13 @@ type WorkoutLike = {
 
 export type WorkoutCompletionMap = Record<string, boolean>;
 
+function getStorageKey() {
+  const profile =
+    localStorage.getItem("activeProfile") || "Aisling";
+
+  return `workoutCompletionMap_${profile}`;
+}
+
 export const useWorkoutProgress = (
   workouts: WorkoutLike[] | undefined
 ) => {
@@ -28,9 +35,10 @@ export const useWorkoutProgress = (
   useEffect(() => {
     if (!workouts) return;
 
-    const workoutCompletionMap = localStorage.getItem(
-      "workoutCompletionMap"
-    );
+    const storageKey = getStorageKey();
+
+    const workoutCompletionMap =
+      localStorage.getItem(storageKey);
 
     if (workoutCompletionMap) {
       const parsedMap = JSON.parse(
@@ -46,12 +54,13 @@ export const useWorkoutProgress = (
       }
     }
 
-    const initialMap: WorkoutCompletionMap = Object.fromEntries(
-      workouts.map(({ id }) => [id, false])
-    );
+    const initialMap: WorkoutCompletionMap =
+      Object.fromEntries(
+        workouts.map(({ id }) => [id, false])
+      );
 
     localStorage.setItem(
-      "workoutCompletionMap",
+      storageKey,
       JSON.stringify(initialMap)
     );
 
@@ -61,6 +70,8 @@ export const useWorkoutProgress = (
 
   const updateWorkoutProgress = useCallback(
     (workoutId: string, isComplete: boolean) => {
+      const storageKey = getStorageKey();
+
       setWorkoutProgressMap((prevMap) => {
         const updatedWorkouts = {
           ...prevMap,
@@ -68,7 +79,7 @@ export const useWorkoutProgress = (
         };
 
         localStorage.setItem(
-          "workoutCompletionMap",
+          storageKey,
           JSON.stringify(updatedWorkouts)
         );
 
@@ -83,7 +94,9 @@ export const useWorkoutProgress = (
   );
 
   const resetWorkoutProgress = useCallback(() => {
-    localStorage.removeItem("workoutCompletionMap");
+    const storageKey = getStorageKey();
+
+    localStorage.removeItem(storageKey);
     setWorkoutProgressMap({});
     setIsEveryWorkoutComplete(false);
   }, []);
