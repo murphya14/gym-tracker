@@ -26,27 +26,27 @@ type Workout = {
   circuits: Circuit[];
 };
 
+type WeightMap = Record<string, string>;
+
 export default function WorkoutExecution() {
   const router = useRouter();
   const { id } = router.query;
 
-  const [workout, setWorkout] =
-    useState<Workout | null>(null);
+  const [workout, setWorkout] = useState<Workout | null>(null);
+  const [completed, setCompleted] = useState<Record<string, boolean>>({});
+  const [workoutComplete, setWorkoutComplete] = useState(false);
+  const [weights, setWeights] = useState<WeightMap>({});
 
-  const [completed, setCompleted] =
-    useState<Record<string, boolean>>(
-      {}
-    );
+  function getActiveProfile() {
+    return localStorage.getItem("activeProfile") || "Aisling";
+  }
 
-  const [workoutComplete, setWorkoutComplete] =
-    useState(false);
+  function getCompletionStorageKey() {
+    return `workoutCompletionMap_${getActiveProfile()}`;
+  }
 
-  function getStorageKey() {
-    const profile =
-      localStorage.getItem("activeProfile") ||
-      "Aisling";
-
-    return `workoutCompletionMap_${profile}`;
+  function getWeightStorageKey(exerciseId: string) {
+    return `exerciseWeight_${getActiveProfile()}_${exerciseId}`;
   }
 
   useEffect(() => {
@@ -54,19 +54,35 @@ export default function WorkoutExecution() {
 
     fetch(`/api/workout-plan/${id}`)
       .then((res) => res.json())
-      .then(setWorkout);
+      .then((data: Workout) => {
+        setWorkout(data);
 
-    const key = getStorageKey();
+        const initialWeights: WeightMap = {};
 
-    const saved =
-      localStorage.getItem(key);
+        data.circuits.forEach((circuit) => {
+          circuit.exercises.forEach((item) => {
+            const exerciseId = item.exercise?.id;
+
+            if (!exerciseId) return;
+
+            const savedWeight = localStorage.getItem(
+              getWeightStorageKey(exerciseId)
+            );
+
+            if (savedWeight) {
+              initialWeights[exerciseId] = savedWeight;
+            }
+          });
+        });
+
+        setWeights(initialWeights);
+      });
+
+    const saved = localStorage.getItem(getCompletionStorageKey());
 
     if (saved) {
       const parsed = JSON.parse(saved);
-
-      setWorkoutComplete(
-        parsed[String(id)] === true
-      );
+      setWorkoutComplete(parsed[String(id)] === true);
     }
   }, [id]);
 
@@ -77,73 +93,59 @@ export default function WorkoutExecution() {
     }));
   }
 
+  function updateWeight(exerciseId: string, value: string) {
+    setWeights((prev) => ({
+      ...prev,
+      [exerciseId]: value,
+    }));
+
+    localStorage.setItem(getWeightStorageKey(exerciseId), value);
+  }
+
   function finishWorkout() {
-    const key = getStorageKey();
-
-    const saved =
-      localStorage.getItem(key);
-
-    const current = saved
-      ? JSON.parse(saved)
-      : {};
+    const key = getCompletionStorageKey();
+    const saved = localStorage.getItem(key);
+    const current = saved ? JSON.parse(saved) : {};
 
     const updated = {
       ...current,
       [String(id)]: true,
     };
 
-    localStorage.setItem(
-      key,
-      JSON.stringify(updated)
-    );
-
+    localStorage.setItem(key, JSON.stringify(updated));
     setWorkoutComplete(true);
 
     alert("Workout completed ✅");
   }
 
   function markIncomplete() {
-    const key = getStorageKey();
-
-    const saved =
-      localStorage.getItem(key);
-
-    const current = saved
-      ? JSON.parse(saved)
-      : {};
+    const key = getCompletionStorageKey();
+    const saved = localStorage.getItem(key);
+    const current = saved ? JSON.parse(saved) : {};
 
     const updated = {
       ...current,
       [String(id)]: false,
     };
 
-    localStorage.setItem(
-      key,
-      JSON.stringify(updated)
-    );
-
+    localStorage.setItem(key, JSON.stringify(updated));
     setWorkoutComplete(false);
 
     alert("Workout marked incomplete");
   }
 
-  function openVideoModal(
-    videoUrl: string
-  ) {
-    const modal =
-      document.createElement("div");
+  function openVideoModal(videoUrl: string) {
+    const modal = document.createElement("div");
 
     modal.style.position = "fixed";
     modal.style.top = "0";
     modal.style.left = "0";
     modal.style.width = "100%";
     modal.style.height = "100%";
-    modal.style.background =
-      "rgba(0,0,0,0.85)";
+    modal.style.background = "rgba(0,0,0,0.85)";
     modal.style.display = "flex";
     modal.style.alignItems = "center";
-    modal.style.justifyContent =
-      "center";
+    modal.style.justifyContent = "center";
     modal.style.zIndex = "9999";
     modal.style.padding = "20px";
 
@@ -192,36 +194,22 @@ export default function WorkoutExecution() {
     document.body.appendChild(modal);
 
     document
-      .getElementById(
-        "close-video-modal"
-      )
-      ?.addEventListener(
-        "click",
-        () => {
-          document.body.removeChild(
-            modal
-          );
-        }
-      );
+      .getElementById("close-video-modal")
+      ?.addEventListener("click", () => {
+        document.body.removeChild(modal);
+      });
 
-    modal.addEventListener(
-      "click",
-      (e) => {
-        if (e.target === modal) {
-          document.body.removeChild(
-            modal
-          );
-        }
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        document.body.removeChild(modal);
       }
-    );
+    });
   }
 
   if (!workout) {
     return (
       <Layout>
-        <div style={{ padding: 20 }}>
-          Loading workout...
-        </div>
+        <div style={{ padding: 20 }}>Loading workout...</div>
       </Layout>
     );
   }
@@ -259,187 +247,177 @@ export default function WorkoutExecution() {
           </div>
         )}
 
-        {workout.circuits.length ===
-          0 && <p>No circuits found</p>}
+        {workout.circuits.length === 0 && <p>No circuits found</p>}
 
-        {workout.circuits.map(
-          (circuit, circuitIndex) => {
-            const repeatCount = 3;
+        {workout.circuits.map((circuit, circuitIndex) => {
+          const repeatCount = 3;
 
-            return (
-              <div key={circuit.id}>
-                {Array.from({
-                  length: repeatCount,
-                }).map((_, roundIndex) => (
-                  <div
-                    key={`${circuit.id}-${roundIndex}`}
+          return (
+            <div key={circuit.id}>
+              {Array.from({ length: repeatCount }).map((_, roundIndex) => (
+                <div
+                  key={`${circuit.id}-${roundIndex}`}
+                  style={{
+                    border: "1px solid #ddd",
+                    borderRadius: 12,
+                    padding: 16,
+                    marginTop: 18,
+                    background: "#fff",
+                  }}
+                >
+                  <h2
                     style={{
-                      border:
-                        "1px solid #ddd",
-                      borderRadius: 12,
-                      padding: 16,
-                      marginTop: 18,
-                      background: "#fff",
+                      fontSize: 20,
+                      marginBottom: 14,
                     }}
                   >
-                    <h2
-                      style={{
-                        fontSize: 20,
-                        marginBottom: 14,
-                      }}
-                    >
-                      Circuit{" "}
-                      {circuitIndex + 1}:{" "}
-                      {circuit.name} —
-                      Round{" "}
-                      {roundIndex + 1} / 3
-                    </h2>
+                    Circuit {circuitIndex + 1}: {circuit.name} — Round{" "}
+                    {roundIndex + 1} / 3
+                  </h2>
 
-                    {circuit.exercises.map(
-                      (item) => {
-                        const key = `${circuit.id}-${roundIndex}-${item.id}`;
+                  {circuit.exercises.map((item) => {
+                    const key = `${circuit.id}-${roundIndex}-${item.id}`;
+                    const isDone = completed[key];
+                    const exerciseId = item.exercise?.id;
+                    const savedWeight = exerciseId ? weights[exerciseId] : "";
 
-                        const isDone =
-                          completed[key];
+                    return (
+                      <div
+                        key={key}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "40px 1fr",
+                          gap: 12,
+                          padding: "14px 0",
+                          borderTop: "1px solid #eee",
+                          opacity: isDone ? 0.5 : 1,
+                          alignItems: "start",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!isDone}
+                          onChange={() => toggleComplete(key)}
+                          style={{
+                            width: 22,
+                            height: 22,
+                            marginTop: 4,
+                          }}
+                        />
 
-                        return (
-                          <div
-                            key={key}
+                        <div>
+                          <strong
                             style={{
-                              display:
-                                "grid",
-                              gridTemplateColumns:
-                                "40px 1fr",
-                              gap: 12,
-                              padding:
-                                "14px 0",
-                              borderTop:
-                                "1px solid #eee",
-                              opacity:
-                                isDone
-                                  ? 0.5
-                                  : 1,
-                              alignItems:
-                                "start",
+                              display: "block",
+                              fontSize: 18,
+                              textDecoration: isDone ? "line-through" : "none",
                             }}
                           >
-                            <input
-                              type="checkbox"
-                              checked={
-                                !!isDone
-                              }
-                              onChange={() =>
-                                toggleComplete(
-                                  key
-                                )
-                              }
-                              style={{
-                                width: 22,
-                                height: 22,
-                                marginTop: 4,
-                              }}
-                            />
+                            {item.exercise?.name || "Exercise"}
+                          </strong>
 
-                            <div>
-                              <strong
-                                style={{
-                                  display:
-                                    "block",
-                                  fontSize: 18,
-                                  textDecoration:
-                                    isDone
-                                      ? "line-through"
-                                      : "none",
-                                }}
-                              >
-                                {item
-                                  .exercise
-                                  ?.name ||
-                                  "Exercise"}
-                              </strong>
-
-                              <div
-                                style={{
-                                  marginTop: 6,
-                                  fontSize: 16,
-                                  fontWeight: 500,
-                                }}
-                              >
-                                {item.reps} reps
-                              </div>
-
-                              <div
-                                style={{
-                                  marginTop: 6,
-                                  color:
-                                    "#666",
-                                  lineHeight:
-                                    1.4,
-                                }}
-                              >
-                                {item
-                                  .exercise
-                                  ?.description ||
-                                  "-"}
-                              </div>
-
-                              {item
-                                .exercise
-                                ?.videoUrl ? (
-                                <button
-                                  style={{
-                                    marginTop: 10,
-                                    padding:
-                                      "8px 12px",
-                                    borderRadius: 8,
-                                    border:
-                                      "1px solid #ccc",
-                                    cursor:
-                                      "pointer",
-                                    background:
-                                      "#111",
-                                    color:
-                                      "white",
-                                  }}
-                                  onClick={() =>
-                                    openVideoModal(
-                                      item
-                                        .exercise
-                                        ?.videoUrl ||
-                                        ""
-                                    )
-                                  }
-                                >
-                                  ▶ Watch Demo
-                                </button>
-                              ) : (
-                                <div
-                                  style={{
-                                    marginTop: 8,
-                                    color:
-                                      "#999",
-                                  }}
-                                >
-                                  No video
-                                </div>
-                              )}
-                            </div>
+                          <div
+                            style={{
+                              marginTop: 6,
+                              fontSize: 16,
+                              fontWeight: 500,
+                            }}
+                          >
+                            {item.reps} reps
                           </div>
-                        );
-                      }
-                    )}
-                  </div>
-                ))}
-              </div>
-            );
-          }
-        )}
+
+                          <div
+                            style={{
+                              marginTop: 8,
+                              display: "grid",
+                              gridTemplateColumns: "1fr",
+                              gap: 6,
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: 14,
+                                color: "#666",
+                              }}
+                            >
+                              Last weight:{" "}
+                              <strong>
+                                {savedWeight ? `${savedWeight}kg` : "-"}
+                              </strong>
+                            </div>
+
+                            {exerciseId && (
+                              <input
+                                type="number"
+                                inputMode="decimal"
+                                placeholder="Today weight kg"
+                                value={savedWeight || ""}
+                                onChange={(e) =>
+                                  updateWeight(exerciseId, e.target.value)
+                                }
+                                style={{
+                                  padding: 10,
+                                  borderRadius: 8,
+                                  border: "1px solid #ccc",
+                                  maxWidth: 220,
+                                }}
+                              />
+                            )}
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: 8,
+                              color: "#666",
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {item.exercise?.description || "-"}
+                          </div>
+
+                          {item.exercise?.videoUrl ? (
+                            <button
+                              style={{
+                                marginTop: 10,
+                                padding: "8px 12px",
+                                borderRadius: 8,
+                                border: "1px solid #ccc",
+                                cursor: "pointer",
+                                background: "#111",
+                                color: "white",
+                              }}
+                              onClick={() =>
+                                openVideoModal(item.exercise?.videoUrl || "")
+                              }
+                            >
+                              ▶ Watch Demo
+                            </button>
+                          ) : (
+                            <div
+                              style={{
+                                marginTop: 8,
+                                color: "#999",
+                              }}
+                            >
+                              No video
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          );
+        })}
 
         <div
           style={{
             display: "flex",
             gap: 12,
             marginTop: 30,
+            flexWrap: "wrap",
           }}
         >
           <button
