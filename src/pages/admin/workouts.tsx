@@ -1,6 +1,7 @@
 import Layout from "~/components/layout";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import ProfileSelector from "~/components/profileSelector";;
 
 type Workout = {
   id: string;
@@ -187,6 +188,7 @@ export default function AdminWorkouts() {
         >
           Workout Admin
         </h1>
+        <ProfileSelector />
 
         {nextWorkout && (
           <button
