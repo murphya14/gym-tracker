@@ -38,12 +38,36 @@ export default function WorkoutExecution() {
       {}
     );
 
+  const [workoutComplete, setWorkoutComplete] =
+    useState(false);
+
+  function getStorageKey() {
+    const profile =
+      localStorage.getItem("activeProfile") ||
+      "Aisling";
+
+    return `workoutCompletionMap_${profile}`;
+  }
+
   useEffect(() => {
     if (!id) return;
 
     fetch(`/api/workout-plan/${id}`)
       .then((res) => res.json())
       .then(setWorkout);
+
+    const key = getStorageKey();
+
+    const saved =
+      localStorage.getItem(key);
+
+    if (saved) {
+      const parsed = JSON.parse(saved);
+
+      setWorkoutComplete(
+        parsed[String(id)] === true
+      );
+    }
   }, [id]);
 
   function toggleComplete(key: string) {
@@ -51,6 +75,56 @@ export default function WorkoutExecution() {
       ...prev,
       [key]: !prev[key],
     }));
+  }
+
+  function finishWorkout() {
+    const key = getStorageKey();
+
+    const saved =
+      localStorage.getItem(key);
+
+    const current = saved
+      ? JSON.parse(saved)
+      : {};
+
+    const updated = {
+      ...current,
+      [String(id)]: true,
+    };
+
+    localStorage.setItem(
+      key,
+      JSON.stringify(updated)
+    );
+
+    setWorkoutComplete(true);
+
+    alert("Workout completed ✅");
+  }
+
+  function markIncomplete() {
+    const key = getStorageKey();
+
+    const saved =
+      localStorage.getItem(key);
+
+    const current = saved
+      ? JSON.parse(saved)
+      : {};
+
+    const updated = {
+      ...current,
+      [String(id)]: false,
+    };
+
+    localStorage.setItem(
+      key,
+      JSON.stringify(updated)
+    );
+
+    setWorkoutComplete(false);
+
+    alert("Workout marked incomplete");
   }
 
   function openVideoModal(
@@ -170,6 +244,21 @@ export default function WorkoutExecution() {
           {workout.name}
         </h1>
 
+        {workoutComplete && (
+          <div
+            style={{
+              background: "#dcfce7",
+              color: "#166534",
+              padding: 14,
+              borderRadius: 10,
+              marginBottom: 20,
+              fontWeight: 600,
+            }}
+          >
+            ✅ Workout Complete
+          </div>
+        )}
+
         {workout.circuits.length ===
           0 && <p>No circuits found</p>}
 
@@ -276,8 +365,7 @@ export default function WorkoutExecution() {
                                   fontWeight: 500,
                                 }}
                               >
-                                {item.reps}{" "}
-                                reps
+                                {item.reps} reps
                               </div>
 
                               <div
@@ -346,6 +434,42 @@ export default function WorkoutExecution() {
             );
           }
         )}
+
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            marginTop: 30,
+          }}
+        >
+          <button
+            onClick={finishWorkout}
+            style={{
+              padding: "14px 18px",
+              borderRadius: 10,
+              border: "none",
+              background: "#22c55e",
+              color: "white",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            ✅ Finish Workout
+          </button>
+
+          <button
+            onClick={markIncomplete}
+            style={{
+              padding: "14px 18px",
+              borderRadius: 10,
+              border: "1px solid #ccc",
+              background: "white",
+              cursor: "pointer",
+            }}
+          >
+            ↩ Mark Incomplete
+          </button>
+        </div>
       </div>
     </Layout>
   );
