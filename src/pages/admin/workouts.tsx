@@ -163,13 +163,22 @@ export default function AdminWorkouts() {
     );
   }
 
-  const programNames = [...new Set(workouts.map((w) => getProgramName(w)))];
+const programNames = [
+  ...new Set(workouts.map((w) => getProgramName(w))),
+].sort((a, b) => {
+  const getProgramNumber = (name: string) => {
+    const match = name.match(/program\s*(\d+)/i);
+    return match ? Number(match[1]) : 999;
+  };
 
-  const sortedAllWorkouts = sortWorkouts(workouts);
+  return getProgramNumber(a) - getProgramNumber(b);
+});
 
-  const nextWorkout = sortedAllWorkouts.find(
-    (workout) => completionMap[workout.id] !== true
-  );
+const sortedAllWorkouts = sortWorkouts(workouts);
+
+const nextWorkout = sortedAllWorkouts.find(
+  (workout) => completionMap[workout.id] !== true
+);
 
   return (
     <Layout>
