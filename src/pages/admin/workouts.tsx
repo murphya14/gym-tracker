@@ -477,11 +477,24 @@ const progressPercent =
                               marginTop: 20,
                             }}
                           >
-                            <button
-                              onClick={() => router.push(`/workout/${w.id}`)}
-                            >
-                              Start
-                            </button>
+<button
+  onClick={() => router.push(`/workout/${w.id}`)}
+  style={{
+    width: "100%",
+    padding: "14px 16px",
+    borderRadius: 14,
+    border: "none",
+    background:
+      "linear-gradient(135deg, #22c55e 0%, #14b8a6 100%)",
+    color: "white",
+    fontSize: 16,
+    fontWeight: 800,
+    cursor: "pointer",
+    boxShadow: "0 10px 20px rgba(34, 197, 94, 0.25)",
+  }}
+>
+  ▶ Start Workout
+</button>
 
                             {/* <button
                               onClick={() =>
