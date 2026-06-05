@@ -85,6 +85,35 @@ export default function AdminWorkouts() {
     });
   }
 
+  function getWorkoutWeek(name: string) {
+  const match = name.match(/week\s*(\d+)/i);
+  return match ? Number(match[1]) : null;
+}
+
+function getWorkoutPhase(name: string) {
+  const week = getWorkoutWeek(name);
+
+  if (!week) return null;
+
+  if (week >= 1 && week <= 3) {
+    return {
+      label: "Phase 1",
+      background: "#dbeafe",
+      color: "#1d4ed8",
+    };
+  }
+
+  if (week >= 4 && week <= 6) {
+    return {
+      label: "Phase 2",
+      background: "#ede9fe",
+      color: "#6d28d9",
+    };
+  }
+
+  return null;
+}
+
   async function createWorkout() {
     const res = await fetch("/api/workout-plan/create-empty", {
       method: "POST",
@@ -317,6 +346,23 @@ const nextWorkout = programNames
                           }}
                         >
                           {w.name}
+
+{getWorkoutPhase(w.name) && (
+  <span
+    style={{
+      marginLeft: 8,
+      padding: "3px 8px",
+      borderRadius: 999,
+      fontSize: 12,
+      fontWeight: 700,
+      background: getWorkoutPhase(w.name)?.background,
+      color: getWorkoutPhase(w.name)?.color,
+      whiteSpace: "nowrap",
+    }}
+  >
+    {getWorkoutPhase(w.name)?.label}
+  </span>
+)}
 
                           {isCompleted && (
                             <span
