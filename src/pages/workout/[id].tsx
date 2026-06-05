@@ -371,7 +371,7 @@ export default function WorkoutExecution() {
                           </div>
 
   {item.exercise?.description &&
-  !["per arm", "per leg", "each side"].includes(
+  !["per arm", "per leg", "each side", "per side"].includes(
     item.exercise.description.toLowerCase()
   ) && (
     <div
