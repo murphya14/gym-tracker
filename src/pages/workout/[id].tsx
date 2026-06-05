@@ -316,15 +316,20 @@ export default function WorkoutExecution() {
                             {item.exercise?.name || "Exercise"}
                           </strong>
 
-                          <div
-                            style={{
-                              marginTop: 6,
-                              fontSize: 16,
-                              fontWeight: 500,
-                            }}
-                          >
-                            {item.reps} reps
-                          </div>
+    <div
+  style={{
+    marginTop: 6,
+    fontSize: 16,
+    fontWeight: 500,
+  }}
+>
+  {item.reps} reps
+  {item.exercise?.description &&
+    ["per arm", "per leg", "each side"].includes(
+      item.exercise.description.toLowerCase()
+    ) &&
+    ` ${item.exercise.description}`}
+</div>
 
                           <div
                             style={{
@@ -365,15 +370,20 @@ export default function WorkoutExecution() {
                             )}
                           </div>
 
-                          <div
-                            style={{
-                              marginTop: 8,
-                              color: "#666",
-                              lineHeight: 1.4,
-                            }}
-                          >
-                            {item.exercise?.description || "-"}
-                          </div>
+  {item.exercise?.description &&
+  !["per arm", "per leg", "each side"].includes(
+    item.exercise.description.toLowerCase()
+  ) && (
+    <div
+      style={{
+        marginTop: 8,
+        color: "#666",
+        lineHeight: 1.4,
+      }}
+    >
+      {item.exercise.description}
+    </div>
+  )}
 
                           {item.exercise?.videoUrl ? (
                             <button
