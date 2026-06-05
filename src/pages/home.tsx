@@ -50,7 +50,7 @@ const Home: NextPage = () => {
             </p>
           </button>
 
-          CREATE WORKOUT
+        
           {/* <button
             onClick={createWorkout}
             className="rounded-xl border p-6 text-left shadow hover:bg-gray-100"
