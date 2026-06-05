@@ -102,38 +102,49 @@ export default function WorkoutExecution() {
     localStorage.setItem(getWeightStorageKey(exerciseId), value);
   }
 
-  function finishWorkout() {
-    const key = getCompletionStorageKey();
-    const saved = localStorage.getItem(key);
-    const current = saved ? JSON.parse(saved) : {};
+ function finishWorkout() {
+  const confirmed = window.confirm(
+    "Are you sure you want to mark this workout as complete?"
+  );
 
-    const updated = {
-      ...current,
-      [String(id)]: true,
-    };
+  if (!confirmed) return;
 
-    localStorage.setItem(key, JSON.stringify(updated));
-    setWorkoutComplete(true);
+  const key = getCompletionStorageKey();
+  const saved = localStorage.getItem(key);
+  const current = saved ? JSON.parse(saved) : {};
 
-    alert("Workout completed ✅");
-  }
+  const updated = {
+    ...current,
+    [String(id)]: true,
+  };
 
-  function markIncomplete() {
-    const key = getCompletionStorageKey();
-    const saved = localStorage.getItem(key);
-    const current = saved ? JSON.parse(saved) : {};
+  localStorage.setItem(key, JSON.stringify(updated));
+  setWorkoutComplete(true);
 
-    const updated = {
-      ...current,
-      [String(id)]: false,
-    };
+  alert("Workout completed ✅");
+}
 
-    localStorage.setItem(key, JSON.stringify(updated));
-    setWorkoutComplete(false);
+function markIncomplete() {
+  const confirmed = window.confirm(
+    "Are you sure you want to mark this workout as incomplete?"
+  );
 
-    alert("Workout marked incomplete");
-  }
+  if (!confirmed) return;
 
+  const key = getCompletionStorageKey();
+  const saved = localStorage.getItem(key);
+  const current = saved ? JSON.parse(saved) : {};
+
+  const updated = {
+    ...current,
+    [String(id)]: false,
+  };
+
+  localStorage.setItem(key, JSON.stringify(updated));
+  setWorkoutComplete(false);
+
+  alert("Workout marked incomplete");
+}
   function openVideoModal(videoUrl: string) {
     const modal = document.createElement("div");
 
