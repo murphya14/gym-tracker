@@ -6,7 +6,7 @@ import Head from "next/head";
 
 import { api } from "~/utils/api";
 
-
+import "~/styles/globals.css";
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -15,7 +15,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
   return (
     <SessionProvider session={session}>
       <Head>
-        <title>Guns for Huns</title>
+        <title>Gym Tracker</title>
 
         <meta
           name="viewport"
@@ -28,7 +28,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
         />
 
         <meta name="theme-color" content="#111827" />
-<meta name="mobile-web-app-capable" content="yes" />
+
         <meta
           name="apple-mobile-web-app-capable"
           content="yes"

@@ -1,9 +1,9 @@
 {
   "id": "/",
-  "name": "Guns for Huns",
-  "short_name": "Guns for Huns",
+  "name": "Gym Tracker",
+  "short_name": "Gym Tracker",
   "description": "Workout tracker app",
-  "start_url": "/admin/workouts",
+  "start_url": "/home",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -15,6 +15,20 @@
       "sizes": "256x256",
       "type": "image/png",
       "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-home.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/desktop-home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
     }
   ]
 }
