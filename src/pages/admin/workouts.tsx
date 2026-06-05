@@ -306,6 +306,18 @@ const nextWorkout = programNames
           const programWorkouts = workouts.filter(
             (w) => getProgramName(w) === programName
           );
+          
+          const completedCount = programWorkouts.filter(
+  (w) => completionMap[w.id] === true
+).length;
+
+const totalCount = programWorkouts.length;
+
+const progressPercent =
+  totalCount > 0
+    ? Math.round((completedCount / totalCount) * 100)
+    : 0;
+          
 
           const sortedProgramWorkouts = sortWorkouts(programWorkouts);
 
@@ -334,13 +346,33 @@ const nextWorkout = programNames
                 </h2>
 
                 <p
-                  style={{
-                    marginTop: 6,
-                    opacity: 0.8,
-                  }}
-                >
-                  {programWorkouts.length} workouts
-                </p>
+  style={{
+    marginTop: 6,
+    opacity: 0.85,
+  }}
+>
+  {completedCount} / {totalCount} complete
+</p>
+
+<div
+  style={{
+    marginTop: 10,
+    height: 8,
+    background: "rgba(255,255,255,0.25)",
+    borderRadius: 999,
+    overflow: "hidden",
+  }}
+>
+  <div
+    style={{
+      width: `${progressPercent}%`,
+      height: "100%",
+      background: "#22c55e",
+      borderRadius: 999,
+      transition: "width 0.3s ease",
+    }}
+  />
+</div>
               </div>
 
               {isProgramOpen &&
