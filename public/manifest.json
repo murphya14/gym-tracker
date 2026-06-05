@@ -1,7 +1,7 @@
 {
   "id": "/",
   "name": "Gym Tracker",
-  "short_name": "G",
+  "short_name": "Gym Tracker",
   "description": "Workout tracker app",
   "start_url": "/admin/workouts",
   "scope": "/",
