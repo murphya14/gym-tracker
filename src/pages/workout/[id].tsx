@@ -36,6 +36,7 @@ export default function WorkoutExecution() {
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [workoutComplete, setWorkoutComplete] = useState(false);
   const [weights, setWeights] = useState<WeightMap>({});
+  const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
 
   function getActiveProfile() {
     return localStorage.getItem("activeProfile") || "Aisling";
@@ -62,7 +63,6 @@ export default function WorkoutExecution() {
         data.circuits.forEach((circuit) => {
           circuit.exercises.forEach((item) => {
             const exerciseId = item.exercise?.id;
-
             if (!exerciseId) return;
 
             const savedWeight = localStorage.getItem(
@@ -214,6 +214,21 @@ export default function WorkoutExecution() {
     );
   }
 
+  const workoutRounds = workout.circuits.flatMap((circuit, circuitIndex) =>
+    Array.from({ length: 3 }).map((_, roundIndex) => ({
+      circuit,
+      circuitIndex,
+      roundIndex,
+    }))
+  );
+
+  const currentRound = workoutRounds[currentRoundIndex];
+
+  const progressPercent =
+    workoutRounds.length > 0
+      ? Math.round(((currentRoundIndex + 1) / workoutRounds.length) * 100)
+      : 0;
+
   return (
     <Layout>
       <div
@@ -221,6 +236,7 @@ export default function WorkoutExecution() {
           padding: 16,
           maxWidth: 900,
           margin: "0 auto",
+          paddingBottom: 120,
         }}
       >
         <h1
@@ -249,178 +265,260 @@ export default function WorkoutExecution() {
 
         {workout.circuits.length === 0 && <p>No circuits found</p>}
 
-        {workout.circuits.map((circuit, circuitIndex) => {
-          const repeatCount = 3;
+        {currentRound && (
+          <div>
+            <div
+              style={{
+                background: "linear-gradient(135deg, #111827, #0f766e)",
+                color: "white",
+                padding: 18,
+                borderRadius: 18,
+                marginBottom: 18,
+                boxShadow: "0 12px 28px rgba(15, 118, 110, 0.25)",
+              }}
+            >
+              <div style={{ fontSize: 13, opacity: 0.85 }}>
+                Round {currentRoundIndex + 1} of {workoutRounds.length}
+              </div>
 
-          return (
-            <div key={circuit.id}>
-              {Array.from({ length: repeatCount }).map((_, roundIndex) => (
+              <h2 style={{ fontSize: 22, margin: "6px 0" }}>
+                Circuit {currentRound.circuitIndex + 1}:{" "}
+                {currentRound.circuit.name}
+              </h2>
+
+              <div
+                style={{
+                  marginTop: 12,
+                  height: 8,
+                  background: "rgba(255,255,255,0.25)",
+                  borderRadius: 999,
+                  overflow: "hidden",
+                }}
+              >
                 <div
-                  key={`${circuit.id}-${roundIndex}`}
                   style={{
-                    border: "1px solid #ddd",
-                    borderRadius: 12,
-                    padding: 16,
-                    marginTop: 18,
-                    background: "#fff",
+                    width: `${progressPercent}%`,
+                    height: "100%",
+                    background: "#22c55e",
+                    borderRadius: 999,
+                    transition: "width 0.3s ease",
                   }}
-                >
-                  <h2
+                />
+              </div>
+            </div>
+
+            <div
+              style={{
+                border: "1px solid #ddd",
+                borderRadius: 16,
+                padding: 16,
+                background: "#fff",
+              }}
+            >
+              {currentRound.circuit.exercises.map((item) => {
+                const key = `${currentRound.circuit.id}-${currentRound.roundIndex}-${item.id}`;
+                const isDone = completed[key];
+                const exerciseId = item.exercise?.id;
+                const savedWeight = exerciseId ? weights[exerciseId] : "";
+                const description =
+                  item.exercise?.description?.toLowerCase().trim() || "";
+
+                const repModifiers = [
+                  "per arm",
+                  "per leg",
+                  "per side",
+                  "each side",
+                ];
+
+                const isRepModifier = repModifiers.includes(description);
+
+                return (
+                  <div
+                    key={key}
                     style={{
-                      fontSize: 20,
-                      marginBottom: 14,
+                      display: "grid",
+                      gridTemplateColumns: "40px 1fr",
+                      gap: 12,
+                      padding: "16px 0",
+                      borderTop: "1px solid #eee",
+                      opacity: isDone ? 0.5 : 1,
+                      alignItems: "start",
                     }}
                   >
-                    Circuit {circuitIndex + 1}: {circuit.name} — Round{" "}
-                    {roundIndex + 1} / 3
-                  </h2>
+                    <input
+                      type="checkbox"
+                      checked={!!isDone}
+                      onChange={() => toggleComplete(key)}
+                      style={{
+                        width: 24,
+                        height: 24,
+                        marginTop: 4,
+                      }}
+                    />
 
-                  {circuit.exercises.map((item) => {
-                    const key = `${circuit.id}-${roundIndex}-${item.id}`;
-                    const isDone = completed[key];
-                    const exerciseId = item.exercise?.id;
-                    const savedWeight = exerciseId ? weights[exerciseId] : "";
-
-                    return (
-                      <div
-                        key={key}
+                    <div>
+                      <strong
                         style={{
-                          display: "grid",
-                          gridTemplateColumns: "40px 1fr",
-                          gap: 12,
-                          padding: "14px 0",
-                          borderTop: "1px solid #eee",
-                          opacity: isDone ? 0.5 : 1,
-                          alignItems: "start",
+                          display: "block",
+                          fontSize: 18,
+                          textDecoration: isDone ? "line-through" : "none",
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={!!isDone}
-                          onChange={() => toggleComplete(key)}
-                          style={{
-                            width: 22,
-                            height: 22,
-                            marginTop: 4,
-                          }}
-                        />
+                        {item.exercise?.name || "Exercise"}
+                      </strong>
 
-                        <div>
-                          <strong
-                            style={{
-                              display: "block",
-                              fontSize: 18,
-                              textDecoration: isDone ? "line-through" : "none",
-                            }}
-                          >
-                            {item.exercise?.name || "Exercise"}
-                          </strong>
-
-    <div
-  style={{
-    marginTop: 6,
-    fontSize: 16,
-    fontWeight: 500,
-  }}
->
-  {item.reps} reps
-  {item.exercise?.description &&
-    ["per arm", "per leg", "each side"].includes(
-      item.exercise.description.toLowerCase()
-    ) &&
-    ` ${item.exercise.description}`}
-</div>
-
-                          <div
-                            style={{
-                              marginTop: 8,
-                              display: "grid",
-                              gridTemplateColumns: "1fr",
-                              gap: 6,
-                            }}
-                          >
-                            <div
-                              style={{
-                                fontSize: 14,
-                                color: "#666",
-                              }}
-                            >
-                              Last weight:{" "}
-                              <strong>
-                                {savedWeight ? `${savedWeight}kg` : "-"}
-                              </strong>
-                            </div>
-
-                            {exerciseId && (
-                              <input
-                                type="number"
-                                inputMode="decimal"
-                                placeholder="Today weight kg"
-                                value={savedWeight || ""}
-                                onChange={(e) =>
-                                  updateWeight(exerciseId, e.target.value)
-                                }
-                                style={{
-                                  padding: 10,
-                                  borderRadius: 8,
-                                  border: "1px solid #ccc",
-                                  maxWidth: 220,
-                                }}
-                              />
-                            )}
-                          </div>
-
-  {item.exercise?.description &&
-  !["per arm", "per leg", "each side", "per side"].includes(
-    item.exercise.description.toLowerCase()
-  ) && (
-    <div
-      style={{
-        marginTop: 8,
-        color: "#666",
-        lineHeight: 1.4,
-      }}
-    >
-      {item.exercise.description}
-    </div>
-  )}
-
-                          {item.exercise?.videoUrl ? (
-                            <button
-                              style={{
-                                marginTop: 10,
-                                padding: "8px 12px",
-                                borderRadius: 8,
-                                border: "1px solid #ccc",
-                                cursor: "pointer",
-                                background: "#111",
-                                color: "white",
-                              }}
-                              onClick={() =>
-                                openVideoModal(item.exercise?.videoUrl || "")
-                              }
-                            >
-                              ▶ Watch Demo
-                            </button>
-                          ) : (
-                            <div
-                              style={{
-                                marginTop: 8,
-                                color: "#999",
-                              }}
-                            >
-                              No video
-                            </div>
-                          )}
-                        </div>
+                      <div
+                        style={{
+                          marginTop: 6,
+                          fontSize: 16,
+                          fontWeight: 700,
+                          color: "#111827",
+                        }}
+                      >
+                        {item.reps} reps
+                        {isRepModifier && ` ${item.exercise?.description}`}
                       </div>
-                    );
-                  })}
-                </div>
-              ))}
+
+                      <div
+                        style={{
+                          marginTop: 10,
+                          display: "grid",
+                          gridTemplateColumns: "1fr",
+                          gap: 8,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 14,
+                            color: "#666",
+                          }}
+                        >
+                          Last weight:{" "}
+                          <strong>
+                            {savedWeight ? `${savedWeight}kg` : "-"}
+                          </strong>
+                        </div>
+
+                        {exerciseId && (
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            placeholder="Today weight kg"
+                            value={savedWeight || ""}
+                            onChange={(e) =>
+                              updateWeight(exerciseId, e.target.value)
+                            }
+                            style={{
+                              padding: 12,
+                              borderRadius: 10,
+                              border: "1px solid #ccc",
+                              width: "100%",
+                              maxWidth: 240,
+                              fontSize: 16,
+                            }}
+                          />
+                        )}
+                      </div>
+
+                      {item.exercise?.description && !isRepModifier && (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            color: "#666",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {item.exercise.description}
+                        </div>
+                      )}
+
+                      {item.exercise?.videoUrl ? (
+                        <button
+                          style={{
+                            marginTop: 12,
+                            padding: "9px 13px",
+                            borderRadius: 10,
+                            border: "1px solid #ccc",
+                            cursor: "pointer",
+                            background: "#111827",
+                            color: "white",
+                            fontWeight: 600,
+                          }}
+                          onClick={() =>
+                            openVideoModal(item.exercise?.videoUrl || "")
+                          }
+                        >
+                          ▶ Watch Demo
+                        </button>
+                      ) : (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            color: "#999",
+                          }}
+                        >
+                          No video
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                marginTop: 18,
+              }}
+            >
+              <button
+                disabled={currentRoundIndex === 0}
+                onClick={() =>
+                  setCurrentRoundIndex((prev) => Math.max(prev - 1, 0))
+                }
+                style={{
+                  flex: 1,
+                  padding: 14,
+                  borderRadius: 12,
+                  border: "1px solid #ccc",
+                  opacity: currentRoundIndex === 0 ? 0.5 : 1,
+                  background: "white",
+                  cursor: currentRoundIndex === 0 ? "not-allowed" : "pointer",
+                }}
+              >
+                ← Previous
+              </button>
+
+              <button
+                disabled={currentRoundIndex === workoutRounds.length - 1}
+                onClick={() =>
+                  setCurrentRoundIndex((prev) =>
+                    Math.min(prev + 1, workoutRounds.length - 1)
+                  )
+                }
+                style={{
+                  flex: 1,
+                  padding: 14,
+                  borderRadius: 12,
+                  border: "none",
+                  background: "#22c55e",
+                  color: "white",
+                  fontWeight: 700,
+                  opacity:
+                    currentRoundIndex === workoutRounds.length - 1 ? 0.5 : 1,
+                  cursor:
+                    currentRoundIndex === workoutRounds.length - 1
+                      ? "not-allowed"
+                      : "pointer",
+                }}
+              >
+                Next Round →
+              </button>
+            </div>
+          </div>
+        )}
 
         <div
           style={{
