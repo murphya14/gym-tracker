@@ -230,7 +230,7 @@ const nextWorkout = programNames
             marginBottom: 20,
           }}
         >
-          Workout Admin
+          
         </h1>
         <ProfileSelector />
 
