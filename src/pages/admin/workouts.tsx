@@ -174,11 +174,17 @@ const programNames = [
   return getProgramNumber(a) - getProgramNumber(b);
 });
 
-const sortedAllWorkouts = sortWorkouts(workouts);
+const nextWorkout = programNames
+  .map((programName) => {
+    const programWorkouts = workouts.filter(
+      (w) => getProgramName(w) === programName
+    );
 
-const nextWorkout = sortedAllWorkouts.find(
-  (workout) => completionMap[workout.id] !== true
-);
+    return sortWorkouts(programWorkouts).find(
+      (workout) => completionMap[workout.id] !== true
+    );
+  })
+  .find(Boolean);
 
   return (
     <Layout>
@@ -219,7 +225,7 @@ const nextWorkout = sortedAllWorkouts.find(
           </button>
         )}
 
-        <button
+        {/* <button
           onClick={createWorkout}
           style={{
             marginBottom: 20,
@@ -232,7 +238,7 @@ const nextWorkout = sortedAllWorkouts.find(
           }}
         >
           + Create New Workout
-        </button>
+        </button> */}
 
         {workouts.length === 0 && <p>No workouts yet</p>}
 
@@ -365,10 +371,10 @@ const nextWorkout = sortedAllWorkouts.find(
                             <button
                               onClick={() => router.push(`/workout/${w.id}`)}
                             >
-                              View / Execute
+                              Start
                             </button>
 
-                            <button
+                            {/* <button
                               onClick={() =>
                                 router.push(`/admin/workouts/${w.id}`)
                               }
@@ -382,7 +388,7 @@ const nextWorkout = sortedAllWorkouts.find(
 
                             <button onClick={() => deleteWorkout(w.id)}>
                               Delete Workout
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       )}

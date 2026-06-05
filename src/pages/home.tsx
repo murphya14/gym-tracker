@@ -50,8 +50,8 @@ const Home: NextPage = () => {
             </p>
           </button>
 
-          {/* CREATE WORKOUT */}
-          <button
+          CREATE WORKOUT
+          {/* <button
             onClick={createWorkout}
             className="rounded-xl border p-6 text-left shadow hover:bg-gray-100"
           >
@@ -62,10 +62,10 @@ const Home: NextPage = () => {
             <p className="mt-2 text-sm text-gray-600">
               Build a workout with circuits and exercises.
             </p>
-          </button>
+          </button> */}
 
           {/* CREATE EXERCISE */}
-          <button
+          {/* <button
             onClick={() =>
               router.push("/admin/exercises")
             }
@@ -78,7 +78,7 @@ const Home: NextPage = () => {
             <p className="mt-2 text-sm text-gray-600">
               Add exercises and attach video links.
             </p>
-          </button>
+          </button> */}
         </div>
       </div>
     </Layout>
