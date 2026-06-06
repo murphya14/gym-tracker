@@ -288,14 +288,13 @@ function markIncomplete() {
                 boxShadow: "0 12px 28px rgba(15, 118, 110, 0.25)",
               }}
             >
-              <div style={{ fontSize: 13, opacity: 0.85 }}>
-                Round {currentRoundIndex + 1} of {workoutRounds.length}
-              </div>
+<div style={{ fontSize: 13, opacity: 0.85 }}>
+  Circuit {currentRound.circuitIndex + 1} of {workout.circuits.length}
+</div>
 
-              <h2 style={{ fontSize: 22, margin: "6px 0" }}>
-                Circuit {currentRound.circuitIndex + 1}:{" "}
-                {currentRound.circuit.name}
-              </h2>
+<h2 style={{ fontSize: 22, margin: "6px 0" }}>
+  Round {currentRound.roundIndex + 1} of 3
+</h2>
 
               <div
                 style={{
