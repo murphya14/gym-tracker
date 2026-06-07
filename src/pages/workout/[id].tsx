@@ -46,11 +46,13 @@ export default function WorkoutExecution() {
     return `workoutCompletionMap_${getActiveProfile()}`;
   }
 
-  function scrollToTop() {
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth",
-  });
+function scrollToTop() {
+  setTimeout(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, 50);
 }
 
   function getWeightStorageKey(exerciseId: string) {
