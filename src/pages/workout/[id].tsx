@@ -58,48 +58,71 @@ export default function WorkoutExecution() {
   }
 
 
-  useEffect(() => {
-    if (!id) return;
+ useEffect(() => {
+  if (!id) return;
 
-    fetch(`/api/workout-plan/${id}`)
-      .then((res) => res.json())
-      .then((data: Workout) => {
-        setWorkout(data);
+  const workoutId = String(id);
 
-        const initialWeights: WeightMap = {};
+  fetch(`/api/workout-plan/${workoutId}`)
+    .then((res) => res.json())
+    .then((data: Workout) => {
+      setWorkout(data);
 
-        data.circuits.forEach((circuit) => {
-          circuit.exercises.forEach((item) => {
-            const exerciseId = item.exercise?.id;
-            if (!exerciseId) return;
+      const initialWeights: WeightMap = {};
 
-            const savedWeight = localStorage.getItem(
-              getWeightStorageKey(exerciseId)
-            );
+      data.circuits.forEach((circuit) => {
+        circuit.exercises.forEach((item) => {
+          const exerciseId = item.exercise?.id;
+          if (!exerciseId) return;
 
-            if (savedWeight) {
-              initialWeights[exerciseId] = savedWeight;
-            }
-          });
+          const savedWeight = localStorage.getItem(
+            getWeightStorageKey(exerciseId)
+          );
+
+          if (savedWeight) {
+            initialWeights[exerciseId] = savedWeight;
+          }
         });
-
-        setWeights(initialWeights);
       });
 
-    const saved = localStorage.getItem(getCompletionStorageKey());
+      setWeights(initialWeights);
 
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setWorkoutComplete(parsed[String(id)] === true);
-    }
-  }, [id]);
+      const savedRound = localStorage.getItem(
+        `currentRound_${getActiveProfile()}_${workoutId}`
+      );
 
+      if (savedRound) {
+        const roundNumber = Number(savedRound);
+
+        if (!Number.isNaN(roundNumber)) {
+          setCurrentRoundIndex(roundNumber);
+        }
+      }
+    });
+
+  const saved = localStorage.getItem(getCompletionStorageKey());
+
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    setWorkoutComplete(parsed[workoutId] === true);
+  }
+}, [id]);
   function toggleComplete(key: string) {
     setCompleted((prev) => ({
       ...prev,
       [key]: !prev[key],
     }));
   }
+
+  function getRoundStorageKey() {
+  return `currentRound_${getActiveProfile()}_${String(id)}`;
+}
+
+function updateCurrentRound(nextIndex: number) {
+  setCurrentRoundIndex(nextIndex);
+  localStorage.setItem(getRoundStorageKey(), String(nextIndex));
+  scrollToTop();
+}
 
   function updateWeight(exerciseId: string, value: string) {
     setWeights((prev) => ({
