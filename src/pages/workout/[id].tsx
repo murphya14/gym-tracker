@@ -1,6 +1,6 @@
 import Layout from "~/components/layout";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type CircuitExercise = {
   id: string;
@@ -38,6 +38,7 @@ export default function WorkoutExecution() {
   const [weights, setWeights] = useState<WeightMap>({});
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
 
+
   function getActiveProfile() {
     return localStorage.getItem("activeProfile") || "Aisling";
   }
@@ -48,10 +49,11 @@ export default function WorkoutExecution() {
 
 function scrollToTop() {
   setTimeout(() => {
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    window.scrollTo(0, 0);
-  }, 50);
+    topRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 100);
 }
 
   function getWeightStorageKey(exerciseId: string) {
@@ -273,10 +275,14 @@ function markIncomplete() {
     workoutRounds.length > 0
       ? Math.round(((currentRoundIndex + 1) / workoutRounds.length) * 100)
       : 0;
+  
+  const topRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <Layout>
+      
       <div
+      ref={topRef}
         style={{
           padding: 16,
           maxWidth: 900,
@@ -523,6 +529,7 @@ onClick={() => {
   setCurrentRoundIndex((prev) => Math.max(prev - 1, 0));
   scrollToTop();
 }}
+
                 style={{
                   flex: 1,
                   padding: 14,
