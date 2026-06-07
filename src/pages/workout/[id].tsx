@@ -37,6 +37,8 @@ export default function WorkoutExecution() {
   const [workoutComplete, setWorkoutComplete] = useState(false);
   const [weights, setWeights] = useState<WeightMap>({});
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
+  const topRef = useRef<HTMLDivElement | null>(null);
+
 
 
   function getActiveProfile() {
@@ -276,7 +278,6 @@ function markIncomplete() {
       ? Math.round(((currentRoundIndex + 1) / workoutRounds.length) * 100)
       : 0;
   
-  const topRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <Layout>
