@@ -46,9 +46,17 @@ export default function WorkoutExecution() {
     return `workoutCompletionMap_${getActiveProfile()}`;
   }
 
+  function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}
+
   function getWeightStorageKey(exerciseId: string) {
     return `exerciseWeight_${getActiveProfile()}_${exerciseId}`;
   }
+
 
   useEffect(() => {
     if (!id) return;
@@ -122,6 +130,7 @@ export default function WorkoutExecution() {
   setWorkoutComplete(true);
 
   alert("Workout completed ✅");
+  void router.push("/admin/workouts");
 }
 
 function markIncomplete() {
@@ -144,6 +153,7 @@ function markIncomplete() {
   setWorkoutComplete(false);
 
   alert("Workout marked incomplete");
+  void router.push("/admin/workouts");
 }
   function openVideoModal(videoUrl: string) {
     const modal = document.createElement("div");
@@ -485,9 +495,10 @@ function markIncomplete() {
             >
               <button
                 disabled={currentRoundIndex === 0}
-                onClick={() =>
-                  setCurrentRoundIndex((prev) => Math.max(prev - 1, 0))
-                }
+onClick={() => {
+  setCurrentRoundIndex((prev) => Math.max(prev - 1, 0));
+  scrollToTop();
+}}
                 style={{
                   flex: 1,
                   padding: 14,
@@ -503,11 +514,12 @@ function markIncomplete() {
 
               <button
                 disabled={currentRoundIndex === workoutRounds.length - 1}
-                onClick={() =>
-                  setCurrentRoundIndex((prev) =>
-                    Math.min(prev + 1, workoutRounds.length - 1)
-                  )
-                }
+onClick={() => {
+  setCurrentRoundIndex((prev) =>
+    Math.min(prev + 1, workoutRounds.length - 1)
+  );
+  scrollToTop();
+}}
                 style={{
                   flex: 1,
                   padding: 14,
