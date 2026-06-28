@@ -217,20 +217,6 @@ const nextWorkout = programNames
 
   return (
     <Layout>
-      <button
-  onClick={createWorkout}
-  style={{
-    marginBottom: 20,
-    padding: "12px 16px",
-    borderRadius: 10,
-    border: "1px solid #ccc",
-    cursor: "pointer",
-    width: "100%",
-    fontSize: 16,
-  }}
->
-  + Create New Workout
-</button>
       <div
         style={{
           padding: 16,
@@ -299,7 +285,7 @@ const nextWorkout = programNames
     </div>
   </button>
 )}
-        {/* <button
+        <button
           onClick={createWorkout}
           style={{
             marginBottom: 20,
@@ -312,7 +298,7 @@ const nextWorkout = programNames
           }}
         >
           + Create New Workout
-        </button> */}
+        </button>
 
         {workouts.length === 0 && <p>No workouts yet</p>}
 
@@ -510,7 +496,7 @@ const progressPercent =
   ▶ Start Workout
 </button>
 
-                            {/* <button
+                            <button
                               onClick={() =>
                                 router.push(`/admin/workouts/${w.id}`)
                               }
@@ -524,7 +510,7 @@ const progressPercent =
 
                             <button onClick={() => deleteWorkout(w.id)}>
                               Delete Workout
-                            </button> */}
+                            </button>
                           </div>
                         </div>
                       )}
