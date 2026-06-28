@@ -285,7 +285,7 @@ const nextWorkout = programNames
     </div>
   </button>
 )}
-        <button
+        {/* <button
           onClick={createWorkout}
           style={{
             marginBottom: 20,
@@ -298,7 +298,7 @@ const nextWorkout = programNames
           }}
         >
           + Create New Workout
-        </button>
+        </button> */}
 
         {workouts.length === 0 && <p>No workouts yet</p>}
 
