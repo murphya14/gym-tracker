@@ -217,6 +217,20 @@ const nextWorkout = programNames
 
   return (
     <Layout>
+      <button
+  onClick={createWorkout}
+  style={{
+    marginBottom: 20,
+    padding: "12px 16px",
+    borderRadius: 10,
+    border: "1px solid #ccc",
+    cursor: "pointer",
+    width: "100%",
+    fontSize: 16,
+  }}
+>
+  + Create New Workout
+</button>
       <div
         style={{
           padding: 16,
