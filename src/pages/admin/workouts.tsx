@@ -496,7 +496,7 @@ const progressPercent =
   ▶ Start Workout
 </button>
 
-                            {/* <button
+                            <button
                               onClick={() =>
                                 router.push(`/admin/workouts/${w.id}`)
                               }
@@ -510,7 +510,7 @@ const progressPercent =
 
                             <button onClick={() => deleteWorkout(w.id)}>
                               Delete Workout
-                            </button> */}
+                            </button> 
                           </div>
                         </div>
                       )}
