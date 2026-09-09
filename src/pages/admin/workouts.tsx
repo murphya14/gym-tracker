@@ -171,6 +171,25 @@ function getWorkoutPhase(name: string) {
   function toggleWorkout(id: string) {
     setOpenWorkoutId((current) => (current === id ? null : id));
   }
+  function setProgramCompletion(programName: string, completed: boolean) {
+  const programWorkouts = workouts.filter(
+    (w) => getProgramName(w) === programName
+  );
+
+  const updatedMap = { ...completionMap };
+
+  programWorkouts.forEach((workout) => {
+    updatedMap[workout.id] = completed;
+  });
+
+  setCompletionMap(updatedMap);
+
+  const profile = localStorage.getItem("activeProfile") || "Aisling";
+  localStorage.setItem(
+    `workoutCompletionMap_${profile}`,
+    JSON.stringify(updatedMap)
+  );
+}
 
   function toggleProgram(programName: string) {
     setOpenProgram((current) =>
@@ -372,6 +391,44 @@ const progressPercent =
       transition: "width 0.3s ease",
     }}
   />
+</div>
+<div
+  style={{
+    display: "flex",
+    gap: 8,
+    marginTop: 12,
+  }}
+  onClick={(e) => e.stopPropagation()}
+>
+  <button
+    onClick={() => setProgramCompletion(programName, true)}
+    style={{
+      padding: "8px 12px",
+      borderRadius: 8,
+      border: "1px solid #22c55e",
+      background: "#22c55e",
+      color: "white",
+      cursor: "pointer",
+      fontWeight: 600,
+    }}
+  >
+    ✓ Mark All Complete
+  </button>
+
+  <button
+    onClick={() => setProgramCompletion(programName, false)}
+    style={{
+      padding: "8px 12px",
+      borderRadius: 8,
+      border: "1px solid #ccc",
+      background: "white",
+      color: "#111827",
+      cursor: "pointer",
+      fontWeight: 600,
+    }}
+  >
+    ↺ Mark All Incomplete
+  </button>
 </div>
               </div>
 
